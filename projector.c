@@ -127,11 +127,6 @@ void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter){
 }
 
 /**
- * generates 'nOfSlices' horizontal slices of a solid cubic object with side length 'sideLength'
- * with an offset of 'offset'. The cube has a spherical cavity. 
- * 
-*/
-/**
  * Generates a sub-section of a solid cubic object with an internal spherical cavity.
  * 'f' is the pointer to the array on which to store the sub-section.
  * 'nOfSlices' is the number of voxel along the Y axis.
@@ -166,6 +161,7 @@ void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, int sideL
         }
     }
 }
+
 /**
  * returns the coordinate of a plane parallel to the YZ plane
  * 'index' is the index of the plane to be returned where '0' is the index of the smallest-valued coordinate plane
@@ -605,10 +601,10 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
     if(argc > 1){
-        objectType = atoi(argv[1]);
+        stationaryDetector = atoi(argv[1]);
     }
     if(argc > 2){
-        stationaryDetector = atoi(argv[1]);
+        objectType = atoi(argv[2]);
     }
 
     //iterates over object subsection 
