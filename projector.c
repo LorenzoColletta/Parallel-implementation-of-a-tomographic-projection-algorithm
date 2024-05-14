@@ -277,17 +277,17 @@ int getSidesIntersection(const struct point a, const struct point b, double *sid
 /**
  * Returns the maximum parametric value a, representing the last intersection between ray and object
  * 'a' is the array containing the parametrical value of the intersection between the ray and the object's side along each axis.
- * 'isOrthogonal' as a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
+ * 'isParallel' as a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
 */
-double getAMax(double a[3][2], int isOrthogonal){
+double getAMax(double a[3][2], int isParallel){
     double tempMax[3];
     double aMax = 1;
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal)
+        if(i + 1 != isParallel)
             tempMax[i] = a[i][0] > a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal) /* TODO: aMax sembra il _minimo_ di una serie di valor, è ok? */
+        if(i + 1 != isParallel) /* TODO: aMax sembra il _minimo_ di una serie di valor, è ok? */
             aMax = aMax < tempMax[i] ? aMax : tempMax[i];
     }
     return aMax;
@@ -296,17 +296,17 @@ double getAMax(double a[3][2], int isOrthogonal){
 /**
  * Returns the minimum parametric value a, representing the fist intersection between ray and object
  * 'a' is the array containing the parametrical value of the intersection between the ray and the object's side along each axis.
- * 'isOrthogonal' has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
+ * 'isParallel' has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
 */
-double getAMin(double a[3][2], int isOrthogonal ){
+double getAMin(double a[3][2], int isParallel ){
     double tempMin[3];
     double aMin = 0;
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal)
+        if(i + 1 != isParallel)
             tempMin[i] = a[i][0] < a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal) /* aMin sembra il _massimo_ di una serie di valori, è ok? */
+        if(i + 1 != isParallel) /* aMin sembra il _massimo_ di una serie di valori, è ok? */
             aMin = aMin > tempMin[i] ? aMin : tempMin[i];
     }
     return aMin;
@@ -316,15 +316,15 @@ double getAMin(double a[3][2], int isOrthogonal ){
 /**
  * Returns the range of indices of the planes.
  * 'source' and 'pixel' are the points that identify the ray.
- * 'isOrthogonal'  has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
+ * 'isParallel'  has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
  * 'aMin' is the minimum parametrical value of the intersection between the ray and the object.
  * 'aMax' is the maximum parametrical value of the intersection between the ray and the object.
 */
-struct ranges getRangeOfIndex(const struct point source, const struct point pixel, int isOrthogonal, double aMin, double aMax){
+struct ranges getRangeOfIndex(const struct point source, const struct point pixel, int isParallel, double aMin, double aMax){
     struct ranges idxs;
 
     //gets range of indeces of XZ parallel planes
-    if(isOrthogonal != Y){
+    if(isParallel != Y){
         if(pixel.y - source.y >= 0){
             idxs.yMinIndx = nPlanes[Y] - ceil((getYPlane(nPlanes[Y] - 1) - aMin * (pixel.y - source.y) - source.y) / VOXEL_Y);
             idxs.yMaxIndx = 1 + floor((aMax * (pixel.y - source.y) + source.y - getYPlane(0)) / VOXEL_Y);
@@ -338,7 +338,7 @@ struct ranges getRangeOfIndex(const struct point source, const struct point pixe
     }
 
     //gets range of indeces of YZ parallel planes
-    if(isOrthogonal != X){
+    if(isParallel != X){
         if(pixel.x - source.x >= 0){
             idxs.xMinIndx = nPlanes[X] - ceil((getXPlane(nPlanes[X] - 1) - aMin * (pixel.x - source.x) - source.x) / VOXEL_X);
             idxs.xMaxIndx = 1 + floor((aMax * (pixel.x - source.x) + source.x - getXPlane(0)) / VOXEL_X);
@@ -352,7 +352,7 @@ struct ranges getRangeOfIndex(const struct point source, const struct point pixe
     }
 
     //gets range of indeces of XY parallel planes
-    if(isOrthogonal != Z){
+    if(isParallel != Z){
         if(pixel.z - source.z >= 0){
             idxs.zMinIndx = nPlanes[Z] - ceil((getZPlane(nPlanes[Z] - 1) - aMin * (pixel.z - source.z) - source.z) / VOXEL_Z);
             idxs.zMaxIndx = 1 + floor((aMax * (pixel.z - source.z) + source.z - getZPlane(0)) / VOXEL_Z);
@@ -526,17 +526,17 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                 isXOrthogonal = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
                 isYOrthogonal = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
                 isZOrthogonal = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
-                int isOrthogonal = isXOrthogonal == -1 ? isOrthogonal : isXOrthogonal; 
-                isOrthogonal = isYOrthogonal == -1 ? isOrthogonal : isYOrthogonal; 
-                isOrthogonal = isZOrthogonal == -1 ? isOrthogonal : isZOrthogonal; 
+                int isParallel = isXOrthogonal == -1 ? isParallel : isXOrthogonal; 
+                isParallel = isYOrthogonal == -1 ? isParallel : isYOrthogonal; 
+                isParallel = isZOrthogonal == -1 ? isParallel : isZOrthogonal; 
 
-                aMin = getAMin(temp, isOrthogonal);
-                aMax = getAMax(temp, isOrthogonal);
+                aMin = getAMin(temp, isParallel);
+                aMax = getAMax(temp, isParallel);
 
                 //struct ranges indeces;
                 if(aMin < aMax){
                     //computes Min-Max plane indexes O(1)
-                    const struct ranges indeces = getRangeOfIndex(source, pixel, isOrthogonal, aMin, aMax);
+                    const struct ranges indeces = getRangeOfIndex(source, pixel, isParallel, aMin, aMax);
 
                     //computes lenghts of the arrays containing parametric value of the intersection with each set of parallel planes
                     int lenX = indeces.xMaxIndx - indeces.xMinIndx;
