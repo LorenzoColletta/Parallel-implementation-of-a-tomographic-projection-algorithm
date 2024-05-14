@@ -495,6 +495,11 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
     double amax = -INFINITY;
     double amin = INFINITY;
     double temp[3][2];
+    double aMerged[nPlanes[X] + nPlanes[X] + nPlanes[X]];
+    double segments;
+    double aX[nPlanes[X]];
+    double aY[nPlanes[Y]];
+    double aZ[nPlanes[Z]];
 
     //iterates over each source  Ntheta
     for(int angle = 0; angle <= nTheta; angle++){
@@ -508,7 +513,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
         fflush(stderr);
 
         //iterates over each pixel of the detector Np
-#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp) reduction(min:amin) reduction(max:amax)
+#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp, aX, aY, aZ, aMerged, segments) reduction(min:amin) reduction(max:amax)
         for(int r = 0; r < nSidePixels; r++){
             for(int c = 0; c < nSidePixels; c++){
                 struct point pixel;
@@ -546,10 +551,6 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     lenY = lenY < 0 ? 0 : lenY;
                     lenZ = lenZ < 0 ? 0 : lenZ;
                     const int lenA = lenX + lenY + lenZ;
-                    double a[lenA], aMerged[lenA];
-                    double *aX = a;
-                    double *aY = &a[lenX];
-                    double *aZ = &a[lenX + lenY];
 
                     //computes ray-planes intersection Nx + Ny + Nz
                     getAllIntersections(source, pixel, indeces, aX, X);
@@ -560,17 +561,16 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     mergeABC(aX, aY, aZ, lenX, lenY, lenZ, aMerged);
 
                     //associates each segment to the respective voxel Nx + Ny + Nz
-                    double segments[lenA];
                     const double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
                     for(int i = 0; i < lenA - 1; i ++){
-                        segments[i] = d12 * (aMerged[i + 1] - aMerged[i]);
+                        segments = d12 * (aMerged[i + 1] - aMerged[i]);
                         const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
                         const int xRow = ((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X));
                         const int yRow = ((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y));
                         const int zRow = ((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z));
                         const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
 
-                        absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments[i];
+                        absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
 
                             amax = fmax(amax, absorbment[pixelIndex]);
                             amin = fmin(amin, absorbment[pixelIndex]);
