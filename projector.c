@@ -206,7 +206,7 @@ int getIntersection(const struct point a, const struct point b, double value, en
         case X:
             if(a.x - b.x != 0){
                 *inters = (value - a.x) / (b.x - a.x);
-                return 0;
+                return -1;
             } else {
                 return X;
             }
@@ -214,7 +214,7 @@ int getIntersection(const struct point a, const struct point b, double value, en
         case Y:
             if(a.y - b.y != 0){
                 *inters = (value - a.y) / (b.y - a.y);
-                return 0;
+                return -1;
             } else {
                 return Y;
             }
@@ -222,7 +222,7 @@ int getIntersection(const struct point a, const struct point b, double value, en
         case Z:
             if(a.z - b.z != 0){
                 *inters = (value - a.z) / (b.z - a.z);
-                return 0;
+                return -1;
             } else {
                 return Z;
             }
@@ -324,7 +324,7 @@ struct ranges getRangeOfIndex(const struct point source, const struct point pixe
     struct ranges idxs;
 
     //gets range of indeces of XZ parallel planes
-    if(isOrthogonal != Y + 1){
+    if(isOrthogonal != Y){
         if(pixel.y - source.y >= 0){
             idxs.yMinIndx = nPlanes[Y] - ceil((getYPlane(nPlanes[Y] - 1) - aMin * (pixel.y - source.y) - source.y) / VOXEL_Y);
             idxs.yMaxIndx = 1 + floor((aMax * (pixel.y - source.y) + source.y - getYPlane(0)) / VOXEL_Y);
@@ -338,7 +338,7 @@ struct ranges getRangeOfIndex(const struct point source, const struct point pixe
     }
 
     //gets range of indeces of YZ parallel planes
-    if(isOrthogonal != X + 1){
+    if(isOrthogonal != X){
         if(pixel.x - source.x >= 0){
             idxs.xMinIndx = nPlanes[X] - ceil((getXPlane(nPlanes[X] - 1) - aMin * (pixel.x - source.x) - source.x) / VOXEL_X);
             idxs.xMaxIndx = 1 + floor((aMax * (pixel.x - source.x) + source.x - getXPlane(0)) / VOXEL_X);
@@ -352,7 +352,7 @@ struct ranges getRangeOfIndex(const struct point source, const struct point pixe
     }
 
     //gets range of indeces of XY parallel planes
-    if(isOrthogonal != Z + 1){
+    if(isOrthogonal != Z){
         if(pixel.z - source.z >= 0){
             idxs.zMinIndx = nPlanes[Z] - ceil((getZPlane(nPlanes[Z] - 1) - aMin * (pixel.z - source.z) - source.z) / VOXEL_Z);
             idxs.zMaxIndx = 1 + floor((aMax * (pixel.z - source.z) + source.z - getZPlane(0)) / VOXEL_Z);
@@ -522,11 +522,13 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                 //computes Min-Max parametric value O(1)
                 double aMin, aMax;
-                int isOrthogonal = 0;
-                /* FIXME: alla fine di queste tre istruzioni, il valore di isOrthogonal è quello dell'ultimo assegnamento, a prescindere dai valori assegnati prima. Siamo sicuri che sia il comportamento desiderato? */
-                isOrthogonal = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
-                isOrthogonal = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
-                isOrthogonal = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
+                int isXOrthogonal = 0, isYOrthogonal = 0, isZOrthogonal = 0;
+                isXOrthogonal = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
+                isYOrthogonal = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
+                isZOrthogonal = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
+                int isOrthogonal = isXOrthogonal == -1 ? isOrthogonal : isXOrthogonal; 
+                isOrthogonal = isYOrthogonal == -1 ? isOrthogonal : isYOrthogonal; 
+                isOrthogonal = isZOrthogonal == -1 ? isOrthogonal : isZOrthogonal; 
 
                 aMin = getAMin(temp, isOrthogonal);
                 aMax = getAMax(temp, isOrthogonal);
@@ -570,25 +572,8 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                         absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments[i];
 
-                        //                        if(slice == 0 && angle == 0 && r == 0 && c == 0){
-                            /*
-                            absMax[omp_get_thread_num()] = absorbment[pixelIndex];
-                            absMin[omp_get_thread_num()] = absorbment[pixelIndex];
-                            */
-                        //                            amin = amax = absorbment[pixelIndex];
-                        //                        } else {
-                            /*
-                            absMax[omp_get_thread_num()] = absMax[omp_get_thread_num()] < absorbment[pixelIndex] ? absorbment[pixelIndex] : absMax[omp_get_thread_num()];
-                            absMin[omp_get_thread_num()] = absMin[omp_get_thread_num()] > absorbment[pixelIndex] ? absorbment[pixelIndex] : absMin[omp_get_thread_num()];
-                            */
-                        /* TODO: dato che abbiamo inizializzato amax e
-                           amin a +/- infinito, non è più necessario
-                           gestire separatamente il primo valore
-                           assegnato e i successivi. */
                             amax = fmax(amax, absorbment[pixelIndex]);
                             amin = fmin(amin, absorbment[pixelIndex]);
-                            //                        }
-
                     }
 
                 }
