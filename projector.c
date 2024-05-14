@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 #include <omp.h>
 
 #ifndef M_PI
@@ -28,7 +29,7 @@
 #define AP 90                   //source path angle
 #define STEP_ANGLE 15           //angular distance between each source step
 
-#define OBJ_BUFFER 100          //voxel coefficients buffer size 
+#define OBJ_BUFFER 100          //voxel coefficients buffer size
 
 //cartesian axis
 enum axis{
@@ -45,7 +46,7 @@ struct point
     double z;
 };
 
-//models a structure containing the range of indices of the planes to compute the intersection with 
+//models a structure containing the range of indices of the planes to compute the intersection with
 struct ranges{
     int xMinIndx;
     int xMaxIndx;
@@ -56,19 +57,19 @@ struct ranges{
 };
 
 // number of voxel along X axis [0], Y axis [1], Z Axis [2]
-const int nVoxel[3] = {VOXEL_MAT / VOXEL_X, VOXEL_MAT / VOXEL_Y, VOXEL_MAT / VOXEL_Z}; 
+const int nVoxel[3] = {VOXEL_MAT / VOXEL_X, VOXEL_MAT / VOXEL_Y, VOXEL_MAT / VOXEL_Z};
 
 //number of parallel planes alogn X axis [0], Y axis [1], Z axis [2]
 const int nPlanes[3] = {(VOXEL_MAT / VOXEL_X) + 1, (VOXEL_MAT / VOXEL_Y) + 1, (VOXEL_MAT / VOXEL_Z) + 1};
 
-//position of the top-left pixel of the detector relative to the center of the detector 
-const double elementOffset = DETECTOR / 2 - PIXEL / 2;    
+//position of the top-left pixel of the detector relative to the center of the detector
+const double elementOffset = DETECTOR / 2 - PIXEL / 2;
 
 //number of pixel along a detector's side
 const int nSidePixels = DETECTOR / PIXEL;
 
-//flag indicating whether the detector rotates so that it's always orthogonal to the 
-//line passing between the source and the center of the detector 
+//flag indicating whether the detector rotates so that it's always orthogonal to the
+//line passing between the source and the center of the detector
 int stationaryDetector = 0;
 
 
@@ -83,7 +84,7 @@ void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
     const int innerToOuterDiff = nVoxel[X] / 2 - sideLength / 2;
     const int rightSide = innerToOuterDiff + sideLength;
 
-    #pragma omp for collapse(3)  
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, nVoxel, offset, sideLength, innerToOuterDiff, rightSide)
     for(int n = 0 ; n < nOfSlices; n++){
         for(int i = 0; i < nVoxel[Z]; i++){
             for(int j = 0; j < nVoxel[X]; j++){
@@ -105,17 +106,17 @@ void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
  * 'offset' distance (in number of voxel) of the slices to be generated from the initial slice.
  * 'diameter' is the diameter of the sphere.
 */
-void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter){
-    struct point temp;
-
-    #pragma omp for collapse(3)  
-    for(int n = 0; n < nOfSlices; n++){
-        for(int r = 0; r < nVoxel[Z]; r++){
-            for(int c = 0; c < nVoxel[X]; c++){
+void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
+{
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, nVoxel, offset, diameter)
+    for (int n = 0; n < nOfSlices; n++) {
+        for (int r = 0; r < nVoxel[Z]; r++) {
+            for (int c = 0; c < nVoxel[X]; c++) {
+                struct point temp;
                 temp.y = -(VOXEL_MAT / 2) + (VOXEL_Y / 2) + (n + offset) * VOXEL_Y;
                 temp.x = -(VOXEL_MAT / 2) + (VOXEL_X / 2) + (c) * VOXEL_X;
                 temp.z = -(VOXEL_MAT / 2) + (VOXEL_Z / 2) + (r) * VOXEL_Z;
-                double distance = sqrt(pow(temp.x, 2) + pow(temp.y, 2) + pow(temp.z, 2));
+                const double distance = sqrt(pow(temp.x, 2) + pow(temp.y, 2) + pow(temp.z, 2));
                 if(distance <= diameter && c < nVoxel[Z] / 2){
                     f[(nVoxel[Z]) * r + c + n * nVoxel[X] * nVoxel[Z]] = 1;
                 } else {
@@ -123,7 +124,7 @@ void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter){
                 }
             }
         }
-    }   
+    }
 }
 
 /**
@@ -136,22 +137,28 @@ void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter){
 void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, int sideLength){
     const int innerToOuterDiff = nVoxel[X] / 2 - sideLength / 2;
     const int rightSide = innerToOuterDiff + sideLength;
-    struct point temp;
-    struct point sphereCenter;
+    const struct point sphereCenter = {-15000, -15000, 1500};
+    /*
     sphereCenter.x = -15000;
     sphereCenter.z = -15000;
     sphereCenter.y = 15000;
-
-    #pragma omp for collapse(3)  
+    */
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, nVoxel, innerToOuterDiff, rightSide, sphereCenter)
     for(int n = 0 ; n < nOfSlices; n++){
         for(int i = 0; i < nVoxel[Z]; i++){
             for(int j = 0; j < nVoxel[X]; j++){
                 f[(nVoxel[Z]) * i + j + n * nVoxel[X] * nVoxel[Z]] = 0;
-                if( (i >= innerToOuterDiff) && (i <= rightSide) && (j >= innerToOuterDiff) && (j <= rightSide) && (n + offset >= innerToOuterDiff) && (n + offset <=  nVoxel[Y] - innerToOuterDiff)){
+                if ( (i >= innerToOuterDiff) &&
+                     (i <= rightSide) &&
+                     (j >= innerToOuterDiff) &&
+                     (j <= rightSide) &&
+                     (n + offset >= innerToOuterDiff) &&
+                     (n + offset <=  nVoxel[Y] - innerToOuterDiff) ) {
+                    struct point temp;
                     temp.y = -(VOXEL_MAT / 2) + (VOXEL_Y / 2) + (n + offset) * VOXEL_Y;
                     temp.x = -(VOXEL_MAT / 2) + (VOXEL_X / 2) + (j) * VOXEL_X;
                     temp.z = -(VOXEL_MAT / 2) + (VOXEL_Z / 2) + (i) * VOXEL_Z;
-                    double distance = sqrt(pow(temp.x - sphereCenter.x, 2) + pow(temp.y - sphereCenter.y, 2) + pow(temp.z - sphereCenter.z, 2));
+                    const double distance = sqrt(pow(temp.x - sphereCenter.x, 2) + pow(temp.y - sphereCenter.y, 2) + pow(temp.z - sphereCenter.z, 2));
                     if(distance > 10000)
                         f[(nVoxel[Z]) * i + j + n * nVoxel[X] * nVoxel[Z]] = 1.0;
                 } else {
@@ -194,7 +201,7 @@ double getZPlane(int index){
  * 'ax' is the axis orthogonal to the plane.
  * 'inters' is the parametrical value that identify the intersection point along the ray.
 */
-int getIntersection(struct point a, struct point b, double value, enum axis ax, double *inters){
+int getIntersection(const struct point a, const struct point b, double value, enum axis ax, double *inters){
     switch (ax){
         case X:
             if(a.x - b.x != 0){
@@ -227,29 +234,28 @@ int getIntersection(struct point a, struct point b, double value, enum axis ax, 
 }
 
 /**
- * Computes the parametrical value of the intersection between a ray and a plane given the index of the plane. 
+ * Computes the parametrical value of the intersection between a ray and a plane given the index of the plane.
  * Returns the axis to which the ray is orthogonal, -1 otherwise.
  * 'a' and 'b' are the points that identify the ray.
  * 'planeIndex' is the index of the plane.
  * 'ax' is the axis orthogonal to the plane.
  * 'inters' is the parametrical value that identify the intersection point along the ray.
 */
-int getIntersectionFromIndex(struct point a, struct point b, int planeIndex, enum axis ax, double *inters){
+int getIntersectionFromIndex(const struct point a, const struct point b, int planeIndex, enum axis ax, double *inters){
     double value;
-    if(ax == X){
+    if (ax == X){
         value = getXPlane(planeIndex);
-    }
-    if(ax == Y){
+    } else if(ax == Y){
         value = getYPlane(planeIndex);
-    }
-    if(ax == Z){
+    } else if(ax == Z){
         value = getZPlane(planeIndex);
-    }
+    } else
+        assert(0);
     return getIntersection(a, b, value, ax, inters);
 }
 
 /**
- * Computes the parametrical values of the intersections between a ray and the object sides along a given axis. 
+ * Computes the parametrical values of the intersections between a ray and the object sides along a given axis.
  * Returns the axis to which the ray is orthogonal, -1 otherwise.
  * 'a' and 'b' are the points that identify the ray.
  * 'sideA' is the intersection with the side with the smallest-valued coordinate.
@@ -257,7 +263,7 @@ int getIntersectionFromIndex(struct point a, struct point b, int planeIndex, enu
  * 'ax' is the axis orthogonal to the plane.
  * 'slice' index of the sub-section of the object currently available.
 */
-int getSidesIntersection(struct point a, struct point b, double *sideA, double *sideB, enum axis ax, int slice){
+int getSidesIntersection(const struct point a, const struct point b, double *sideA, double *sideB, enum axis ax, int slice){
     double firstSide = 0;
     double lastSide = nPlanes[ax] - 1;
     if(ax == Y){
@@ -281,7 +287,7 @@ double getAMax(double a[3][2], int isOrthogonal){
             tempMax[i] = a[i][0] > a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal)
+        if(i + 1 != isOrthogonal) /* TODO: aMax sembra il _minimo_ di una serie di valor, è ok? */
             aMax = aMax < tempMax[i] ? aMax : tempMax[i];
     }
     return aMax;
@@ -300,7 +306,7 @@ double getAMin(double a[3][2], int isOrthogonal ){
             tempMin[i] = a[i][0] < a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isOrthogonal)
+        if(i + 1 != isOrthogonal) /* aMin sembra il _massimo_ di una serie di valori, è ok? */
             aMin = aMin > tempMin[i] ? aMin : tempMin[i];
     }
     return aMin;
@@ -314,10 +320,10 @@ double getAMin(double a[3][2], int isOrthogonal ){
  * 'aMin' is the minimum parametrical value of the intersection between the ray and the object.
  * 'aMax' is the maximum parametrical value of the intersection between the ray and the object.
 */
-struct ranges getRangeOfIndex(struct point source, struct point pixel, int isOrthogonal, double aMin, double aMax){
+struct ranges getRangeOfIndex(const struct point source, const struct point pixel, int isOrthogonal, double aMin, double aMax){
     struct ranges idxs;
 
-    //gets range of indeces of XZ parallel planes 
+    //gets range of indeces of XZ parallel planes
     if(isOrthogonal != Y + 1){
         if(pixel.y - source.y >= 0){
             idxs.yMinIndx = nPlanes[Y] - ceil((getYPlane(nPlanes[Y] - 1) - aMin * (pixel.y - source.y) - source.y) / VOXEL_Y);
@@ -331,7 +337,7 @@ struct ranges getRangeOfIndex(struct point source, struct point pixel, int isOrt
         idxs.yMaxIndx = 0;
     }
 
-    //gets range of indeces of YZ parallel planes 
+    //gets range of indeces of YZ parallel planes
     if(isOrthogonal != X + 1){
         if(pixel.x - source.x >= 0){
             idxs.xMinIndx = nPlanes[X] - ceil((getXPlane(nPlanes[X] - 1) - aMin * (pixel.x - source.x) - source.x) / VOXEL_X);
@@ -345,7 +351,7 @@ struct ranges getRangeOfIndex(struct point source, struct point pixel, int isOrt
         idxs.xMaxIndx = 0;
     }
 
-    //gets range of indeces of XY parallel planes 
+    //gets range of indeces of XY parallel planes
     if(isOrthogonal != Z + 1){
         if(pixel.z - source.z >= 0){
             idxs.zMinIndx = nPlanes[Z] - ceil((getZPlane(nPlanes[Z] - 1) - aMin * (pixel.z - source.z) - source.z) / VOXEL_Z);
@@ -370,7 +376,7 @@ struct ranges getRangeOfIndex(struct point source, struct point pixel, int isOrt
  * 'a' is a pointer to the array on which to store the parametrical values.
  * 'ax' is the axis orthogonal to the set of planes to which compute the intersection.
 */
-void getAllIntersections(struct point source, struct point pixel, struct ranges planeIndexRange, double *a, enum axis ax){
+void getAllIntersections(const struct point source, const struct point pixel, const struct ranges planeIndexRange, double *a, enum axis ax){
     int start = 0, end = 0;
     int direction = 1;
     double plane;
@@ -384,8 +390,7 @@ void getAllIntersections(struct point source, struct point pixel, struct ranges 
             plane = getXPlane(end);
             direction = -1;
         }
-    }
-    if(ax == Y){
+    } else if(ax == Y){
         start = planeIndexRange.yMinIndx;
         end = planeIndexRange.yMaxIndx;
         plane = getYPlane(start);
@@ -394,8 +399,7 @@ void getAllIntersections(struct point source, struct point pixel, struct ranges 
             plane = getYPlane(end);
             direction = -1;
         }
-    } 
-    if(ax == Z) {
+    } else if(ax == Z) {
         start = planeIndexRange.zMinIndx;
         end = planeIndexRange.zMaxIndx;
         plane = getZPlane(start);
@@ -404,7 +408,8 @@ void getAllIntersections(struct point source, struct point pixel, struct ranges 
             plane = getZPlane(end);
             direction = -1;
         }
-    }
+    } else
+        assert(0);
 
     for (int i = start; i < end; i++){
         getIntersection(source, pixel, plane, ax, &a[i - start]);
@@ -458,17 +463,17 @@ int mergeABC(double *a, double *b, double *c, int lenA, int lenB, int lenC, doub
 }
 
 /**
- * Returns the cartesian coordinates of a pixel located in row 'r' and column 'c' of the detector. 
+ * Returns the cartesian coordinates of a pixel located in row 'r' and column 'c' of the detector.
  * The detector is located at its angular position of angle 'angle'.
- * 'r' is the row of the pixel on the detector matrix. 
+ * 'r' is the row of the pixel on the detector matrix.
  * 'c' is the column of the pixel on the detector matrix.
- * 'angle' is the index of the angle the detector is rotated of. Index '0' corresponds to the least 
+ * 'angle' is the index of the angle the detector is rotated of. Index '0' corresponds to the least
  * value the detector can be rotated of.
 */
 struct point getPixel(int r, int c, int angle){
     struct point pixel;
-    double sinAngle = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-    double cosAngle = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    const double sinAngle = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    const double cosAngle = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
 
     pixel.x = (DOD * sinAngle) + cosAngle * (-elementOffset + PIXEL * c);
     pixel.y = (-DOD) * cosAngle + sinAngle * (-elementOffset + PIXEL * c);
@@ -482,17 +487,19 @@ struct point getPixel(int r, int c, int angle){
  * 'slice' is the index of the sub-section of the object.
  * 'f' stores the coefficients of the voxels cointained in the sub-section.
  * 'absorbment' is the resulting array, contains the value of absorbtion for each pixel.
- * 'absMax' is the maximum absorbtion computed.   
- * 'absMax' is the minimum absorbtion computed.   
+ * 'absMax' is the maximum absorbtion computed.
+ * 'absMax' is the minimum absorbtion computed.
 */
 void computeProjections(int slice, double *f, double *absorbment, double *absMax, double *absMin){
     const int nTheta = (int)(AP / STEP_ANGLE);                      //number of angular position
-    
-    struct point source;
+    double amax = -INFINITY;
+    double amin = INFINITY;
+    double temp[3][2];
 
     //iterates over each source  Ntheta
     for(int angle = 0; angle <= nTheta; angle++){
-        double time = omp_get_wtime();
+        const double time = omp_get_wtime();
+        struct point source;
         source.z = 0;
         source.x = -sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
         source.y = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
@@ -501,11 +508,11 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
         fflush(stderr);
 
         //iterates over each pixel of the detector Np
-        #pragma omp for collapse(2) schedule(dynamic, VOXEL_Z)
+#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp) reduction(min:amin) reduction(max:amax)
         for(int r = 0; r < nSidePixels; r++){
             for(int c = 0; c < nSidePixels; c++){
                 struct point pixel;
-                
+
                 //gets the pixel position based on whether the detector rotates or not
                 if(stationaryDetector){
                     pixel = getPixel(r,c,angle);
@@ -516,7 +523,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                 //computes Min-Max parametric value O(1)
                 double aMin, aMax;
                 int isOrthogonal = 0;
-                double temp[3][2];
+                /* FIXME: alla fine di queste tre istruzioni, il valore di isOrthogonal è quello dell'ultimo assegnamento, a prescindere dai valori assegnati prima. Siamo sicuri che sia il comportamento desiderato? */
                 isOrthogonal = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
                 isOrthogonal = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
                 isOrthogonal = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
@@ -524,11 +531,10 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                 aMin = getAMin(temp, isOrthogonal);
                 aMax = getAMax(temp, isOrthogonal);
 
-
-                struct ranges indeces;
+                //struct ranges indeces;
                 if(aMin < aMax){
                     //computes Min-Max plane indexes O(1)
-                    indeces = getRangeOfIndex(source, pixel, isOrthogonal, aMin, aMax);
+                    const struct ranges indeces = getRangeOfIndex(source, pixel, isOrthogonal, aMin, aMax);
 
                     //computes lenghts of the arrays containing parametric value of the intersection with each set of parallel planes
                     int lenX = indeces.xMaxIndx - indeces.xMinIndx;
@@ -537,7 +543,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     lenX = lenX < 0 ? 0 : lenX;
                     lenY = lenY < 0 ? 0 : lenY;
                     lenZ = lenZ < 0 ? 0 : lenZ;
-                    int lenA = lenX + lenY + lenZ;
+                    const int lenA = lenX + lenY + lenZ;
                     double a[lenA], aMerged[lenA];
                     double *aX = a;
                     double *aY = &a[lenX];
@@ -553,37 +559,49 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                     //associates each segment to the respective voxel Nx + Ny + Nz
                     double segments[lenA];
-                    double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
+                    const double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
                     for(int i = 0; i < lenA - 1; i ++){
-                        int xRow, yRow, zRow;
                         segments[i] = d12 * (aMerged[i + 1] - aMerged[i]);
-                        double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
-                        xRow = ((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X));
-                        yRow = ((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y));
-                        zRow = ((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z));
-                        int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c; 
+                        const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
+                        const int xRow = ((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X));
+                        const int yRow = ((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y));
+                        const int zRow = ((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z));
+                        const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
 
                         absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments[i];
 
-                        if(slice == 0 && angle == 0 && r == 0 && c == 0){
+                        //                        if(slice == 0 && angle == 0 && r == 0 && c == 0){
+                            /*
                             absMax[omp_get_thread_num()] = absorbment[pixelIndex];
                             absMin[omp_get_thread_num()] = absorbment[pixelIndex];
-                        } else {
+                            */
+                        //                            amin = amax = absorbment[pixelIndex];
+                        //                        } else {
+                            /*
                             absMax[omp_get_thread_num()] = absMax[omp_get_thread_num()] < absorbment[pixelIndex] ? absorbment[pixelIndex] : absMax[omp_get_thread_num()];
                             absMin[omp_get_thread_num()] = absMin[omp_get_thread_num()] > absorbment[pixelIndex] ? absorbment[pixelIndex] : absMin[omp_get_thread_num()];
-                        }
+                            */
+                        /* TODO: dato che abbiamo inizializzato amax e
+                           amin a +/- infinito, non è più necessario
+                           gestire separatamente il primo valore
+                           assegnato e i successivi. */
+                            amax = fmax(amax, absorbment[pixelIndex]);
+                            amin = fmin(amin, absorbment[pixelIndex]);
+                            //                        }
 
                     }
 
                 }
             }
-        } 
+        }
         fprintf(stderr,"Time[%d]: %lf\n",angle, omp_get_wtime() - time);
-
     }
+    *absMax = amax;
+    *absMin = amin;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
     //number of angular positions
     const int nTheta = (int)(AP / STEP_ANGLE);
     //array containing the coefficents of each voxel
@@ -591,7 +609,8 @@ int main(int argc, char *argv[]){
     //array containing the computed absorption detected in each pixel of the detector
     double *absorbment = (double*)calloc(nSidePixels * nSidePixels * (nTheta + 1), sizeof(double));
     //each thread has its own variable to store its minimum and maximum absorption computed
-    double absMax[omp_get_num_threads()], absMin[omp_get_num_threads()];
+    //double absMax[omp_get_num_threads()], absMin[omp_get_num_threads()];
+    double absMaxValue, absMinValue;
 
     double totalTime = omp_get_wtime();
 
@@ -607,8 +626,7 @@ int main(int argc, char *argv[]){
         objectType = atoi(argv[2]);
     }
 
-    //iterates over object subsection 
-    #pragma omp parallel default(shared)
+    //iterates over object subsection
     for(int slice = 0; slice < nVoxel[Y]; slice += OBJ_BUFFER){
         //generate object subsection
         switch (objectType){
@@ -619,28 +637,31 @@ int main(int argc, char *argv[]){
                 generateSphereSlice(f, OBJ_BUFFER, slice, VOXEL_MAT / 2);
                 break;
             default:
-            case 3:
                 generateCubeSlice(f, OBJ_BUFFER, slice, nVoxel[X]);
                 break;
         }
-        #pragma omp barrier
 
         //computes subsection projection
-        computeProjections(slice, f, absorbment, absMax, absMin);
-        #pragma omp barrier
-
+        /* TODO: è quelle variabili absMaxValue e absMinValue devono
+           contenere il massimo e il minimo per la slice corrente, non
+           fra tutte le slice, giusto? Nota che le variabili vengono
+           inizializzate correttamente (spero) nella funzione
+           computeProjections(), per cui è ok passarle con valore
+           indefinito. */
+        computeProjections(slice, f, absorbment, &absMaxValue, &absMinValue);
     }
     fprintf(stderr,"Time: %lf\n", omp_get_wtime() - totalTime);
     fprintf(stderr,"end\n");
     fflush(stderr);
 
     //computes the minimum and the maximum absorption computed
+    /*
     double absMinValue = absMin[0], absMaxValue = absMax[0];
     for(int i = 0; i < omp_get_max_threads(); i++){
         absMinValue = absMinValue < absMin[i] ? absMinValue : absMin[i];
         absMaxValue = absMaxValue > absMax[i] ? absMaxValue : absMax[i];
     }
- 
+    */
 
     //iterates over each absorption value computed, prints a value between [0-255]
     printf("P2\n%d %d\n255", nSidePixels, nSidePixels * (nTheta + 1));
@@ -648,10 +669,10 @@ int main(int argc, char *argv[]){
         for(int i = 0; i < nSidePixels; i++ ){
             printf("\n");
             for(int j = 0; j < nSidePixels; j++ ){
-                int pixelIndex = angle * nSidePixels * nSidePixels + i *nSidePixels + j; 
+                int pixelIndex = angle * nSidePixels * nSidePixels + i *nSidePixels + j;
                 int color =  (absorbment[pixelIndex] - absMinValue) * 255 / (absMaxValue - absMinValue);
                 printf("%d ", color);
-            }    
+            }
         }
     }
 
