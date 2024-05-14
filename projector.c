@@ -527,13 +527,14 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                 //computes Min-Max parametric value O(1)
                 double aMin, aMax;
-                int isXOrthogonal = 0, isYOrthogonal = 0, isZOrthogonal = 0;
-                isXOrthogonal = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
-                isYOrthogonal = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
-                isZOrthogonal = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
-                int isParallel = isXOrthogonal == -1 ? isParallel : isXOrthogonal; 
-                isParallel = isYOrthogonal == -1 ? isParallel : isYOrthogonal; 
-                isParallel = isZOrthogonal == -1 ? isParallel : isZOrthogonal; 
+                int isXParallel = 0, isYParallel = 0, isZParallel = 0;
+                isXParallel = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
+                isYParallel = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
+                isZParallel = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
+                int isParallel = -1;
+                isParallel = isXParallel == -1 ? isParallel : isXParallel; 
+                isParallel = isYParallel == -1 ? isParallel : isYParallel; 
+                isParallel = isZParallel == -1 ? isParallel : isZParallel; 
 
                 aMin = getAMin(temp, isParallel);
                 aMax = getAMax(temp, isParallel);
