@@ -155,11 +155,7 @@ void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, int sideL
     const int innerToOuterDiff = nVoxel[X] / 2 - sideLength / 2;
     const int rightSide = innerToOuterDiff + sideLength;
     const struct point sphereCenter = {-15000, -15000, 1500};
-    /*
-    sphereCenter.x = -15000;
-    sphereCenter.z = -15000;
-    sphereCenter.y = 15000;
-    */
+
 #pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, nVoxel, innerToOuterDiff, rightSide, sphereCenter)
     for(int n = 0 ; n < nOfSlices; n++){
         for(int i = 0; i < nVoxel[Z]; i++){
@@ -329,7 +325,6 @@ double getAMin(double a[3][2], int isParallel ){
     return aMin;
 }
 
-// returns the extremes of the range of indices of planes whose intersection is to be calculated
 /**
  * Returns the range of indices of the planes.
  * 'source' and 'pixel' are the points that identify the ray.
@@ -435,7 +430,6 @@ void getAllIntersections(const struct point source, const struct point pixel, co
 
 }
 
-//merges two sorted arrays in a single sorted array
 /**
  * Merges two sorted arrays into one single sorted array.
  * Returns the length of the merged array.
@@ -446,20 +440,6 @@ void getAllIntersections(const struct point source, const struct point pixel, co
  * 'c' is a pointer to the array to store the results.
 */
 int merge(double *a, double *b, int lenA, int lenB, double *c){
-#if 0
-    int j = 0;
-    int k = 0;
-    for(int i = 0; (i < lenA + lenB); i++){
-        if( ((j < lenA) && !(k < lenB)) || ((j < lenA) && (a[j] < b[k])) ){
-            c[i] = a[j];
-            j++;
-        } else {
-            c[i] = b[k];
-            k++;
-        }
-    }
-    return lenA + lenB;
-#else
     int i = 0;
     int j = 0;
     int k = 0;
@@ -484,11 +464,8 @@ int merge(double *a, double *b, int lenA, int lenB, double *c){
         k++;
     }
     return lenA + lenB;
-#endif
 }
 
-//merges three sorted arrays into one sorted array
-//merges two sorted arrays in a single sorted array
 /**
  * Merges three sorted arrays into one single sorted array.
  * Returns the length of the merged array.
@@ -516,8 +493,6 @@ int mergeABC(double *a, double *b, double *c, int lenA, int lenB, int lenC, doub
 */
 struct point getPixel(int r, int c, int angle){
     struct point pixel;
-    //const double sinAngle = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-    //const double cosAngle = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
     const double sinAngle = sin_table[angle];
     const double cosAngle = cos_table[angle];
 
@@ -547,18 +522,14 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
     double aY[nPlanes[Y]];
     double aZ[nPlanes[Z]];
 
-    //iterates over each source  Ntheta
+    //iterates over each source
     for(int angle = 0; angle <= nTheta; angle++){
-        // const double time = omp_get_wtime();
         struct point source;
         source.z = 0;
         source.x = -sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
         source.y = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
 
-        // fprintf(stderr, "angle: %d - %lf\n",angle,(AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-        // fflush(stderr);
-
-        //iterates over each pixel of the detector Np
+        //iterates over each pixel of the detector 
 #pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp, aX, aY, aZ, aMerged, segments) reduction(min:amin) reduction(max:amax)
         for(int r = 0; r < nSidePixels; r++){
             for(int c = 0; c < nSidePixels; c++){
@@ -571,7 +542,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     pixel = getPixel(r,c, nTheta / 2);
                 }
 
-                //computes Min-Max parametric value O(1)
+                //computes Min-Max parametric value 
                 double aMin, aMax;
                 int isXParallel = 0, isYParallel = 0, isZParallel = 0;
                 isXParallel = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
@@ -585,9 +556,8 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                 aMin = getAMin(temp, isParallel);
                 aMax = getAMax(temp, isParallel);
 
-                //struct ranges indeces;
                 if(aMin < aMax){
-                    //computes Min-Max plane indexes O(1)
+                    //computes Min-Max plane indexes 
                     const struct ranges indeces = getRangeOfIndex(source, pixel, isParallel, aMin, aMax);
 
                     //computes lenghts of the arrays containing parametric value of the intersection with each set of parallel planes
