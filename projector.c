@@ -8,7 +8,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#ifdef _OPENMP
 #include <omp.h>
+#else
+double omp_get_wtime( void ) { return 0; }
+#endif
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -21,6 +25,7 @@
 #define PIXEL 85                // detector's pixel side lenght
 
 #define VOXEL_MAT 100000        // entire voxel matrix side lenght
+
 #define DETECTOR 200000         // detector lenght
 
 #define DOD 150000              //distance from object center to detector
@@ -56,6 +61,8 @@ struct ranges{
     int zMaxIndx;
 };
 
+double sin_table[1024], cos_table[1024];
+
 // number of voxel along X axis [0], Y axis [1], Z Axis [2]
 const int nVoxel[3] = {VOXEL_MAT / VOXEL_X, VOXEL_MAT / VOXEL_Y, VOXEL_MAT / VOXEL_Z};
 
@@ -72,6 +79,16 @@ const int nSidePixels = DETECTOR / PIXEL;
 //line passing between the source and the center of the detector
 int stationaryDetector = 0;
 
+void init_tables( void )
+{
+    const int nTheta = (int)(AP / STEP_ANGLE);                      //number of angular position
+    assert(nTheta < sizeof(sin_table)/sizeof(sin_table[0]));
+    //iterates over each source  Ntheta
+    for(int angle = 0; angle <= nTheta; angle++){
+        sin_table[angle] = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+        cos_table[angle] = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    }
+}
 
 /**
  * Generates a sub-section of a solid cubic object given its side length.
@@ -429,6 +446,7 @@ void getAllIntersections(const struct point source, const struct point pixel, co
  * 'c' is a pointer to the array to store the results.
 */
 int merge(double *a, double *b, int lenA, int lenB, double *c){
+#if 0
     int j = 0;
     int k = 0;
     for(int i = 0; (i < lenA + lenB); i++){
@@ -441,6 +459,32 @@ int merge(double *a, double *b, int lenA, int lenB, double *c){
         }
     }
     return lenA + lenB;
+#else
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    while (j < lenA && k < lenB) {
+        if (a[j] < b[k]) {
+            c[i] = a[j];
+            j++;
+        } else {
+            c[i] = b[k];
+            k++;
+        }
+        i++;
+    }
+    while (j < lenA) {
+        c[i] = a[j];
+        i++;
+        j++;
+    }
+    while (k < lenB) {
+        c[i] = b[k];
+        i++;
+        k++;
+    }
+    return lenA + lenB;
+#endif
 }
 
 //merges three sorted arrays into one sorted array
@@ -472,8 +516,10 @@ int mergeABC(double *a, double *b, double *c, int lenA, int lenB, int lenC, doub
 */
 struct point getPixel(int r, int c, int angle){
     struct point pixel;
-    const double sinAngle = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-    const double cosAngle = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    //const double sinAngle = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    //const double cosAngle = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    const double sinAngle = sin_table[angle];
+    const double cosAngle = cos_table[angle];
 
     pixel.x = (DOD * sinAngle) + cosAngle * (-elementOffset + PIXEL * c);
     pixel.y = (-DOD) * cosAngle + sinAngle * (-elementOffset + PIXEL * c);
@@ -503,14 +549,14 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
     //iterates over each source  Ntheta
     for(int angle = 0; angle <= nTheta; angle++){
-        const double time = omp_get_wtime();
+        // const double time = omp_get_wtime();
         struct point source;
         source.z = 0;
         source.x = -sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
         source.y = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
 
-        fprintf(stderr, "angle: %d - %lf\n",angle,(AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-        fflush(stderr);
+        // fprintf(stderr, "angle: %d - %lf\n",angle,(AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+        // fflush(stderr);
 
         //iterates over each pixel of the detector Np
 #pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp, aX, aY, aZ, aMerged, segments) reduction(min:amin) reduction(max:amax)
@@ -563,24 +609,23 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                     //associates each segment to the respective voxel Nx + Ny + Nz
                     const double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
+                    const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
                     for(int i = 0; i < lenA - 1; i ++){
                         segments = d12 * (aMerged[i + 1] - aMerged[i]);
                         const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
                         const int xRow = ((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X));
                         const int yRow = ((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y));
                         const int zRow = ((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z));
-                        const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
 
                         absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
-
-                            amax = fmax(amax, absorbment[pixelIndex]);
-                            amin = fmin(amin, absorbment[pixelIndex]);
                     }
+                    amax = fmax(amax, absorbment[pixelIndex]);
+                    amin = fmin(amin, absorbment[pixelIndex]);
 
                 }
             }
         }
-        fprintf(stderr,"Time[%d]: %lf\n",angle, omp_get_wtime() - time);
+        // fprintf(stderr,"Time[%d]: %lf\n",angle, omp_get_wtime() - time);
     }
     *absMax = amax;
     *absMin = amin;
@@ -595,9 +640,10 @@ int main(int argc, char *argv[])
     //array containing the computed absorption detected in each pixel of the detector
     double *absorbment = (double*)calloc(nSidePixels * nSidePixels * (nTheta + 1), sizeof(double));
     //each thread has its own variable to store its minimum and maximum absorption computed
-    //double absMax[omp_get_num_threads()], absMin[omp_get_num_threads()];
     double absMaxValue, absMinValue;
 
+    init_tables();
+    
     double totalTime = omp_get_wtime();
 
     int objectType = 0;
@@ -628,26 +674,10 @@ int main(int argc, char *argv[])
         }
 
         //computes subsection projection
-        /* TODO: è quelle variabili absMaxValue e absMinValue devono
-           contenere il massimo e il minimo per la slice corrente, non
-           fra tutte le slice, giusto? Nota che le variabili vengono
-           inizializzate correttamente (spero) nella funzione
-           computeProjections(), per cui è ok passarle con valore
-           indefinito. */
         computeProjections(slice, f, absorbment, &absMaxValue, &absMinValue);
     }
-    fprintf(stderr,"Time: %lf\n", omp_get_wtime() - totalTime);
-    fprintf(stderr,"end\n");
+    fprintf(stderr,"Execution time: %lf\n", omp_get_wtime() - totalTime);
     fflush(stderr);
-
-    //computes the minimum and the maximum absorption computed
-    /*
-    double absMinValue = absMin[0], absMaxValue = absMax[0];
-    for(int i = 0; i < omp_get_max_threads(); i++){
-        absMinValue = absMinValue < absMin[i] ? absMinValue : absMin[i];
-        absMaxValue = absMaxValue > absMax[i] ? absMaxValue : absMax[i];
-    }
-    */
 
     //iterates over each absorption value computed, prints a value between [0-255]
     printf("P2\n%d %d\n255", nSidePixels, nSidePixels * (nTheta + 1));
