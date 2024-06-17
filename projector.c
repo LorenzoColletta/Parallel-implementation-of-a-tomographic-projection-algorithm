@@ -504,6 +504,13 @@ struct point getPixel(int r, int c, int angle){
 }
 
 /**
+ * Returns the minimum value between 'a' and 'b'.
+ */
+int min(int a, int b){
+    return a < b ? a : b;
+}
+
+/**
  * Computes the projection of a sub-section of the object onto the detector for each source position.
  * 'slice' is the index of the sub-section of the object.
  * 'f' stores the coefficients of the voxels cointained in the sub-section.
@@ -583,9 +590,9 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     for(int i = 0; i < lenA - 1; i ++){
                         segments = d12 * (aMerged[i + 1] - aMerged[i]);
                         const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
-                        const int xRow = ((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X));
-                        const int yRow = ((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y));
-                        const int zRow = ((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z));
+                        const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
+                        const int yRow = min((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y), nVoxel[Y] - 1);
+                        const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
 
                         absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
                     }
@@ -603,6 +610,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
 int main(int argc, char *argv[])
 {
+
     //number of angular positions
     const int nTheta = (int)(AP / STEP_ANGLE);
     //array containing the coefficents of each voxel
