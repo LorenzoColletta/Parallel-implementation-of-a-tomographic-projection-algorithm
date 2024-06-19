@@ -91,6 +91,20 @@ void init_tables( void )
 }
 
 /**
+ * Returns the minimum value between 'a' and 'b'.
+ */
+int min(int a, int b){
+    return a < b ? a : b;
+}
+
+/**
+ * Returns the minimum value between 'a', 'b' and 'c'
+ */
+int minABC(int a, int b, int c){
+    return min(a,min(b,c));
+}
+
+/**
  * Generates a sub-section of a solid cubic object given its side length.
  * 'f' is the pointer to the array on which to store the sub-section.
  * 'nOfSlices' is the number of voxel along the Y axis.
@@ -503,12 +517,6 @@ struct point getPixel(int r, int c, int angle){
     return pixel;
 }
 
-/**
- * Returns the minimum value between 'a' and 'b'.
- */
-int min(int a, int b){
-    return a < b ? a : b;
-}
 
 /**
  * Computes the projection of a sub-section of the object onto the detector for each source position.
@@ -591,7 +599,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                         segments = d12 * (aMerged[i + 1] - aMerged[i]);
                         const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
                         const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
-                        const int yRow = min((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y), nVoxel[Y] - 1);
+                        const int yRow = minABC((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
                         const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
 
                         absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
