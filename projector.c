@@ -281,7 +281,7 @@ int getSidesIntersection(const struct point a, const struct point b, double *sid
     double lastSide = nPlanes[ax] - 1;
     if(ax == Y){
         firstSide = slice;
-        lastSide = slice + OBJ_BUFFER;
+        lastSide = min(slice + OBJ_BUFFER, nPlanes[Y] - 1);
     }
     getIntersectionFromIndex(a, b, firstSide, ax, sideA);
     return getIntersectionFromIndex(a, b, lastSide, ax, sideB);
