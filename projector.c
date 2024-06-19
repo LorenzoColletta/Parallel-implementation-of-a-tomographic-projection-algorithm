@@ -24,12 +24,6 @@ double omp_get_wtime( void ) { return 0; }
 
 #define PIXEL 85                // detector's pixel side lenght
 
-#define VOXEL_MAT 100000        // entire voxel matrix side lenght
-
-#define DETECTOR 200000         // detector lenght
-
-#define DOD 150000              //distance from object center to detector
-#define DOS 600000              //distance from source to object center
 
 #define AP 90                   //source path angle
 #define STEP_ANGLE 15           //angular distance between each source step
