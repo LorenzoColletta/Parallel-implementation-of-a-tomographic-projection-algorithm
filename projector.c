@@ -63,17 +63,23 @@ struct ranges{
 
 double sin_table[1024], cos_table[1024];
 
+int VOXEL_MAT;
+int DETECTOR;
+int DOD;
+int DOS;
+
 // number of voxel along X axis [0], Y axis [1], Z Axis [2]
-const int nVoxel[3] = {VOXEL_MAT / VOXEL_X, VOXEL_MAT / VOXEL_Y, VOXEL_MAT / VOXEL_Z};
+int nVoxel[3];
 
 //number of parallel planes alogn X axis [0], Y axis [1], Z axis [2]
-const int nPlanes[3] = {(VOXEL_MAT / VOXEL_X) + 1, (VOXEL_MAT / VOXEL_Y) + 1, (VOXEL_MAT / VOXEL_Z) + 1};
+int nPlanes[3];
 
 //position of the top-left pixel of the detector relative to the center of the detector
-const double elementOffset = DETECTOR / 2 - PIXEL / 2;
+double elementOffset;
 
 //number of pixel along a detector's side
-const int nSidePixels = DETECTOR / PIXEL;
+int nSidePixels;
+
 
 //flag indicating whether the detector rotates so that it's always orthogonal to the
 //line passing between the source and the center of the detector
@@ -139,7 +145,7 @@ void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
 */
 void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
 {
-#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, nVoxel, offset, diameter)
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, nVoxel, offset, diameter, VOXEL_MAT)
     for (int n = 0; n < nOfSlices; n++) {
         for (int r = 0; r < nVoxel[Z]; r++) {
             for (int c = 0; c < nVoxel[X]; c++) {
@@ -170,7 +176,7 @@ void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, int sideL
     const int rightSide = innerToOuterDiff + sideLength;
     const struct point sphereCenter = {-15000, -15000, 1500};
 
-#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, nVoxel, innerToOuterDiff, rightSide, sphereCenter)
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, nVoxel, innerToOuterDiff, rightSide, sphereCenter, VOXEL_MAT)
     for(int n = 0 ; n < nOfSlices; n++){
         for(int i = 0; i < nVoxel[Z]; i++){
             for(int j = 0; j < nVoxel[X]; j++){
@@ -619,6 +625,40 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 int main(int argc, char *argv[])
 {
 
+
+    int n = 1259;
+    int objectType = 0;
+    if(argc > 4){
+        fprintf(stderr,"Usage: %s [0-1] [object Type]\n First parameter must be 0 or 1, it indicates whether to rotate the detector (0) or keep it stationary (1); object type must be 1,2 or 3.",argv[0]);
+        return EXIT_FAILURE;
+    }
+    if(argc > 1){
+        n = atoi(argv[1]);
+    }
+    if(argc > 2){
+        stationaryDetector = atoi(argv[2]);
+    }
+    if(argc > 3){
+        objectType = atoi(argv[3]);
+    }
+
+    VOXEL_MAT = n * VOXEL_X * 125 / 294;
+    DETECTOR = n * PIXEL;
+    DOD = 1.5 * VOXEL_MAT;
+    DOS = 6 * VOXEL_MAT;
+
+    nVoxel[X] = VOXEL_MAT / VOXEL_X;
+    nVoxel[Y] = VOXEL_MAT / VOXEL_Y;
+    nVoxel[Z] = VOXEL_MAT / VOXEL_Z;
+
+    nPlanes[X] = (VOXEL_MAT / VOXEL_X) + 1;
+    nPlanes[Y] = (VOXEL_MAT / VOXEL_Y) + 1;
+    nPlanes[Z] = (VOXEL_MAT / VOXEL_Z) + 1;
+
+    elementOffset = DETECTOR / 2 - PIXEL / 2;
+
+    nSidePixels = DETECTOR / PIXEL;
+
     //number of angular positions
     const int nTheta = (int)(AP / STEP_ANGLE);
     //array containing the coefficents of each voxel
@@ -628,21 +668,10 @@ int main(int argc, char *argv[])
     //each thread has its own variable to store its minimum and maximum absorption computed
     double absMaxValue, absMinValue;
 
+
     init_tables();
     
     double totalTime = omp_get_wtime();
-
-    int objectType = 0;
-    if(argc > 3){
-        fprintf(stderr,"Usage: %s [0-1] [object Type]\n First parameter must be 0 or 1, it indicates whether to rotate the detector (0) or keep it stationary (1); object type must be 1,2 or 3.",argv[0]);
-        return EXIT_FAILURE;
-    }
-    if(argc > 1){
-        stationaryDetector = atoi(argv[1]);
-    }
-    if(argc > 2){
-        objectType = atoi(argv[2]);
-    }
 
     //iterates over object subsection
     for(int slice = 0; slice < nVoxel[Y]; slice += OBJ_BUFFER){
