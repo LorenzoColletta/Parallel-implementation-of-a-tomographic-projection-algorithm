@@ -296,11 +296,11 @@ double getAMax(double a[3][2], int isParallel){
     double tempMax[3];
     double aMax = 1;
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isParallel)
+        if(i != isParallel)
             tempMax[i] = a[i][0] > a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isParallel) /* TODO: aMax sembra il _minimo_ di una serie di valor, è ok? */
+        if(i != isParallel) /* TODO: aMax sembra il _minimo_ di una serie di valor, è ok? */
             aMax = aMax < tempMax[i] ? aMax : tempMax[i];
     }
     return aMax;
@@ -315,11 +315,11 @@ double getAMin(double a[3][2], int isParallel ){
     double tempMin[3];
     double aMin = 0;
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isParallel)
+        if(i != isParallel)
             tempMin[i] = a[i][0] < a[i][1] ? a[i][0] : a[i][1];
     }
     for(int i = 0; i < 3; i++){
-        if(i + 1 != isParallel) /* aMin sembra il _massimo_ di una serie di valori, è ok? */
+        if(i != isParallel) /* aMin sembra il _massimo_ di una serie di valori, è ok? */
             aMin = aMin > tempMin[i] ? aMin : tempMin[i];
     }
     return aMin;
