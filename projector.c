@@ -552,9 +552,9 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
 
                 //gets the pixel position based on whether the detector rotates or not
                 if(stationaryDetector){
-                    pixel = getPixel(r,c,angle);
-                } else {
                     pixel = getPixel(r,c, nTheta / 2);
+                } else {
+                    pixel = getPixel(r,c,angle);
                 }
 
                 //computes Min-Max parametric value 
