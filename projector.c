@@ -80,9 +80,9 @@ void init_tables( void )
     const int nTheta = (int)(AP / STEP_ANGLE);                      //number of angular position
     assert(nTheta < sizeof(sin_table)/sizeof(sin_table[0]));
     //iterates over each source  Ntheta
-    for(int angle = 0; angle <= nTheta; angle++){
-        sin_table[angle] = sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
-        cos_table[angle] = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180);
+    for(int positionIndex = 0; positionIndex <= nTheta; positionIndex++){
+        sin_table[positionIndex] = sin((AP / 2 - positionIndex * STEP_ANGLE) * M_PI / 180);
+        cos_table[positionIndex] = cos((AP / 2 - positionIndex * STEP_ANGLE) * M_PI / 180);
     }
 }
 
@@ -96,7 +96,7 @@ int min(int a, int b){
 /**
  * Returns the minimum value between 'a', 'b' and 'c'
  */
-int minABC(int a, int b, int c){
+int min3(int a, int b, int c){
     return min(a,min(b,c));
 }
 
@@ -327,7 +327,6 @@ struct ranges getRangeOfIndex(const double source, const double pixel, int isPar
 */
 void getAllIntersections(const double source, const double pixel, const struct ranges planeIndexRange, double *a, enum axis ax){
     int start = 0, end = 0;
-    int direction = 1;
     double d;
 
     start = planeIndexRange.minIndx;
@@ -410,24 +409,38 @@ int merge(double *a, double *b, int lenA, int lenB, double *c){
  * 'lenC' is the length of the array pointed by 'b'
  * 'merged' is a pointer to the array to store the results.
 */
-int mergeABC(double *a, double *b, double *c, int lenA, int lenB, int lenC, double *merged){
+int merge3(double *a, double *b, double *c, int lenA, int lenB, int lenC, double *merged){
     double ab[lenA + lenB];
     merge(a, b, lenA, lenB, ab);
     return merge(ab, c, lenA + lenB, lenC, merged);
 }
 
 /**
+ * Returns the cartesian coordinates of the source.
+ * 'index' is the index of the position starting from the position with the least angular distance from the y-axis.
+ */
+struct point getSource(int index){
+    struct point source;
+    
+    source.z = 0;
+    source.x = -sin_table[index] * DOS;
+    source.y = cos_table[index] * DOS;
+    
+    return source;
+}
+
+/**
  * Returns the cartesian coordinates of a pixel located in row 'r' and column 'c' of the detector.
- * The detector is located at its angular position of angle 'angle'.
+ * The detector is located at index-th angular position.
  * 'r' is the row of the pixel on the detector matrix.
  * 'c' is the column of the pixel on the detector matrix.
- * 'angle' is the index of the angle the detector is rotated of. Index '0' corresponds to the least
- * value the detector can be rotated of.
+ * 'index' is the index of the position of the detector starting from the position with the 
+ * least angular distance from the y-axis.
 */
-struct point getPixel(int r, int c, int angle){
+struct point getPixel(int r, int c, int index){
     struct point pixel;
-    const double sinAngle = sin_table[angle];
-    const double cosAngle = cos_table[angle];
+    const double sinAngle = sin_table[index];
+    const double cosAngle = cos_table[index];
 
     pixel.x = (DOD * sinAngle) + cosAngle * (-elementOffset + PIXEL * c);
     pixel.y = (-DOD) * cosAngle + sinAngle * (-elementOffset + PIXEL * c);
@@ -481,7 +494,7 @@ double computeAbsorption(struct point source, struct point pixel, int angle, dou
         const double segments = d12 * (a[i + 1] - a[i]);
         const double aMid = (a[i + 1] + a[i]) / 2;
         const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
-        const int yRow = minABC((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(slice)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
+        const int yRow = min3((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(slice)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
         const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
 
         absorbment += f[(yRow) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
@@ -504,20 +517,16 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
     double amin = INFINITY;
     double temp[3][2];
     double aMerged[nPlanes[X] + nPlanes[X] + nPlanes[X]];
-    double segments;
     double aX[nPlanes[X]];
     double aY[nPlanes[Y]];
     double aZ[nPlanes[Z]];
 
     //iterates over each source
-    for(int angle = 0; angle <= nTheta; angle++){
-        struct point source;
-        source.z = 0;
-        source.x = -sin((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
-        source.y = cos((AP / 2 - angle * STEP_ANGLE) * M_PI / 180) * DOS;
+    for(int positionIndex = 0; positionIndex <= nTheta; positionIndex++){
+        const struct point source = getSource(positionIndex);
 
         //iterates over each pixel of the detector 
-#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, angle, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp, aX, aY, aZ, aMerged, segments) reduction(min:amin) reduction(max:amax)
+#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, positionIndex, source, slice, f, absorbment, stationaryDetector, nTheta, nVoxel) private(temp, aX, aY, aZ, aMerged) reduction(min:amin) reduction(max:amax)
         for(int r = 0; r < nSidePixels; r++){
             for(int c = 0; c < nSidePixels; c++){
                 struct point pixel;
@@ -526,24 +535,23 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                 if(stationaryDetector){
                     pixel = getPixel(r,c, nTheta / 2);
                 } else {
-                    pixel = getPixel(r,c,angle);
+                    pixel = getPixel(r,c,positionIndex);
                 }
-
 
                 //computes Min-Max parametric values
                 double aMin, aMax;
-                double temp2[2];
+                double sidesPlanes[2];
                 int isParallel = -1;
-                getSidesXPlanes(temp2);
-                if(!getIntersection(source.x, pixel.x, temp2, 2, &temp[X][0])){
+                getSidesXPlanes(sidesPlanes);
+                if(!getIntersection(source.x, pixel.x, sidesPlanes, 2, &temp[X][0])){
                     isParallel = X;
                 }
-                getSidesYPlanes(temp2, slice);
-                if(!getIntersection(source.y, pixel.y, temp2, 2, &temp[Y][0])){
+                getSidesYPlanes(sidesPlanes, slice);
+                if(!getIntersection(source.y, pixel.y, sidesPlanes, 2, &temp[Y][0])){
                     isParallel = Y;
                 }
-                getSidesZPlanes(temp2);
-                if(!getIntersection(source.z, pixel.z, temp2, 2, &temp[Z][0])){
+                getSidesZPlanes(sidesPlanes);
+                if(!getIntersection(source.z, pixel.z, sidesPlanes, 2, &temp[Z][0])){
                     isParallel = Z;
                 }
 
@@ -561,9 +569,15 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     int lenX = indeces[X].maxIndx - indeces[X].minIndx;
                     int lenY = indeces[Y].maxIndx - indeces[Y].minIndx;
                     int lenZ = indeces[Z].maxIndx - indeces[Z].minIndx;
-                    lenX = lenX < 0 ? 0 : lenX;
-                    lenY = lenY < 0 ? 0 : lenY;
-                    lenZ = lenZ < 0 ? 0 : lenZ;
+                    if(lenX < 0){
+                        lenX = 0;
+                    }
+                    if(lenY < 0){
+                        lenY = 0;
+                    }
+                    if(lenZ < 0){
+                        lenZ = 0;
+                    }
                     const int lenA = lenX + lenY + lenZ;
 
                     //computes ray-planes intersection Nx + Ny + Nz
@@ -572,11 +586,11 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     getAllIntersections(source.z, pixel.z, indeces[Z], aZ, Z);
 
                     //computes segments Nx + Ny + Nz
-                    mergeABC(aX, aY, aZ, lenX, lenY, lenZ, aMerged);
+                    merge3(aX, aY, aZ, lenX, lenY, lenZ, aMerged);
 
                     //associates each segment to the respective voxel Nx + Ny + Nz
-                    const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
-                    absorbment[pixelIndex] += computeAbsorption(source, pixel, angle, aMerged, lenA, slice, f);
+                    const int pixelIndex = positionIndex * nSidePixels * nSidePixels + r *nSidePixels + c;
+                    absorbment[pixelIndex] += computeAbsorption(source, pixel, positionIndex, aMerged, lenA, slice, f);
                     amax = fmax(amax, absorbment[pixelIndex]);
                     amin = fmin(amin, absorbment[pixelIndex]);
 
@@ -663,11 +677,11 @@ int main(int argc, char *argv[])
 
     //iterates over each absorption value computed, prints a value between [0-255]
     printf("P2\n%d %d\n255", nSidePixels, nSidePixels * (nTheta + 1));
-    for(double angle = 0; angle <= nTheta; angle ++){
+    for(double positionIndex = 0; positionIndex <= nTheta; positionIndex ++){
         for(int i = 0; i < nSidePixels; i++ ){
             printf("\n");
             for(int j = 0; j < nSidePixels; j++ ){
-                int pixelIndex = angle * nSidePixels * nSidePixels + i *nSidePixels + j;
+                int pixelIndex = positionIndex * nSidePixels * nSidePixels + i *nSidePixels + j;
                 int color =  (absorbment[pixelIndex] - absMinValue) * 255 / (absMaxValue - absMinValue);
                 printf("%d ", color);
             }
