@@ -47,12 +47,8 @@ struct point
 
 //models a structure containing the range of indices of the planes to compute the intersection with
 struct ranges{
-    int xMinIndx;
-    int xMaxIndx;
-    int yMinIndx;
-    int yMaxIndx;
-    int zMinIndx;
-    int zMaxIndx;
+    int minIndx;
+    int maxIndx;
 };
 
 double sin_table[1024], cos_table[1024];
@@ -220,86 +216,6 @@ double getZPlane(int index){
     return -((VOXEL_MAT) / 2) + index * VOXEL_Z;
 }
 
-/**
- * Computes the parametrical value of the intersection between a ray and a plane given the coordinate of the plane.
- * Returns the axis to which the ray is orthogonal, -1 otherwise.
- * 'a' and 'b' are the points that identify the ray.
- * 'value' is the coordinate of the plane.
- * 'ax' is the axis orthogonal to the plane.
- * 'inters' is the parametrical value that identify the intersection point along the ray.
-*/
-int getIntersection(const struct point a, const struct point b, double value, enum axis ax, double *inters){
-    switch (ax){
-        case X:
-            if(a.x - b.x != 0){
-                *inters = (value - a.x) / (b.x - a.x);
-                return -1;
-            } else {
-                return X;
-            }
-            break;
-        case Y:
-            if(a.y - b.y != 0){
-                *inters = (value - a.y) / (b.y - a.y);
-                return -1;
-            } else {
-                return Y;
-            }
-            break;
-        case Z:
-            if(a.z - b.z != 0){
-                *inters = (value - a.z) / (b.z - a.z);
-                return -1;
-            } else {
-                return Z;
-            }
-        default:
-                return -1;
-            break;
-    }
-    return -1;
-}
-
-/**
- * Computes the parametrical value of the intersection between a ray and a plane given the index of the plane.
- * Returns the axis to which the ray is orthogonal, -1 otherwise.
- * 'a' and 'b' are the points that identify the ray.
- * 'planeIndex' is the index of the plane.
- * 'ax' is the axis orthogonal to the plane.
- * 'inters' is the parametrical value that identify the intersection point along the ray.
-*/
-int getIntersectionFromIndex(const struct point a, const struct point b, int planeIndex, enum axis ax, double *inters){
-    double value;
-    if (ax == X){
-        value = getXPlane(planeIndex);
-    } else if(ax == Y){
-        value = getYPlane(planeIndex);
-    } else if(ax == Z){
-        value = getZPlane(planeIndex);
-    } else
-        assert(0);
-    return getIntersection(a, b, value, ax, inters);
-}
-
-/**
- * Computes the parametrical values of the intersections between a ray and the object sides along a given axis.
- * Returns the axis to which the ray is orthogonal, -1 otherwise.
- * 'a' and 'b' are the points that identify the ray.
- * 'sideA' is the intersection with the side with the smallest-valued coordinate.
- * 'sideB' is the intersection with the side with the greatest-valued coordinate.
- * 'ax' is the axis orthogonal to the plane.
- * 'slice' index of the sub-section of the object currently available.
-*/
-int getSidesIntersection(const struct point a, const struct point b, double *sideA, double *sideB, enum axis ax, int slice){
-    double firstSide = 0;
-    double lastSide = nPlanes[ax] - 1;
-    if(ax == Y){
-        firstSide = slice;
-        lastSide = min(slice + OBJ_BUFFER, nPlanes[Y] - 1);
-    }
-    getIntersectionFromIndex(a, b, firstSide, ax, sideA);
-    return getIntersectionFromIndex(a, b, lastSide, ax, sideB);
-}
 
 /**
  * Returns the maximum parametric value a, representing the last intersection between ray and object
@@ -340,109 +256,112 @@ double getAMin(double a[3][2], int isParallel ){
 }
 
 /**
- * Returns the range of indices of the planes.
- * 'source' and 'pixel' are the points that identify the ray.
- * 'isParallel'  has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
- * 'aMin' is the minimum parametrical value of the intersection between the ray and the object.
- * 'aMax' is the maximum parametrical value of the intersection between the ray and the object.
+ * Computes the parametrical value of the intersection between a ray and a plane given the coordinate of the plane.
+ * Returns the axis to which the ray is orthogonal, -1 otherwise.
+ * 'a' and 'b' are the components along the axis ortogonal to the plane of the two points defining the ray.
+ * 'value' is the coordinate of the plane.
+ * 'ax' is the axis orthogonal to the plane.
+ * 'inters' is the parametrical value that identify the intersection point along the ray.
 */
-struct ranges getRangeOfIndex(const struct point source, const struct point pixel, int isParallel, double aMin, double aMax){
-    struct ranges idxs;
-
-    //gets range of indeces of XZ parallel planes
-    if(isParallel != Y){
-        if(pixel.y - source.y >= 0){
-            idxs.yMinIndx = nPlanes[Y] - ceil((getYPlane(nPlanes[Y] - 1) - aMin * (pixel.y - source.y) - source.y) / VOXEL_Y);
-            idxs.yMaxIndx = 1 + floor((aMax * (pixel.y - source.y) + source.y - getYPlane(0)) / VOXEL_Y);
-        } else {
-            idxs.yMinIndx = nPlanes[Y] - ceil((getYPlane(nPlanes[Y] - 1) - aMax * (pixel.y - source.y) - source.y) / VOXEL_Y);
-            idxs.yMaxIndx = floor((aMin * (pixel.y - source.y) + source.y - getYPlane(0)) / VOXEL_Y);
+int getIntersection(double a, double b, double *plane, int nPlanes, double *inters){
+    if(a - b != 0){
+        for(int i = 0; i < nPlanes; i++){
+            inters[i] = (plane[i] - a) / (b - a);
         }
-    } else {
-        idxs.yMinIndx = 0;
-        idxs.yMaxIndx = 0;
+        return 1;
     }
-
-    //gets range of indeces of YZ parallel planes
-    if(isParallel != X){
-        if(pixel.x - source.x >= 0){
-            idxs.xMinIndx = nPlanes[X] - ceil((getXPlane(nPlanes[X] - 1) - aMin * (pixel.x - source.x) - source.x) / VOXEL_X);
-            idxs.xMaxIndx = 1 + floor((aMax * (pixel.x - source.x) + source.x - getXPlane(0)) / VOXEL_X);
-        } else {
-            idxs.xMinIndx = nPlanes[X] - ceil((getXPlane(nPlanes[X] - 1) - aMax * (pixel.x - source.x) - source.x) / VOXEL_X);
-            idxs.xMaxIndx = floor((aMin * (pixel.x - source.x) + source.x - getXPlane(0)) / VOXEL_X);
-        }
-    } else {
-        idxs.xMinIndx = 0;
-        idxs.xMaxIndx = 0;
-    }
-
-    //gets range of indeces of XY parallel planes
-    if(isParallel != Z){
-        if(pixel.z - source.z >= 0){
-            idxs.zMinIndx = nPlanes[Z] - ceil((getZPlane(nPlanes[Z] - 1) - aMin * (pixel.z - source.z) - source.z) / VOXEL_Z);
-            idxs.zMaxIndx = 1 + floor((aMax * (pixel.z - source.z) + source.z - getZPlane(0)) / VOXEL_Z);
-        } else {
-            idxs.zMinIndx = nPlanes[Z] - ceil((getZPlane(nPlanes[Z] - 1) - aMax * (pixel.z - source.z) - source.z) / VOXEL_Z);
-            idxs.zMaxIndx = floor((aMin * (pixel.z - source.z) + source.z - getZPlane(0)) / VOXEL_Z);
-        }
-
-    } else {
-        idxs.zMinIndx = 0;
-        idxs.zMaxIndx = 0;
-    }
-
-    return idxs;
+    return 0;
 }
 
 /**
+ * Returns the range of indices of the planes.
+ * 'source' and 'pixel' are the components along the axis ortogonal to the plane of the two points defining the ray .
+ * 'isParallel'  has a value corrisponding to the axis to which the array is orthogonal, -1 otherwise.
+ * 'aMin' is the minimum parametrical value of the intersection between the ray and the object.
+ * 'aMax' is the maximum parametrical value of the intersection between the ray and the object.
+ * 'ax' is the axis orthogonal to the plane.
+*/
+struct ranges getRangeOfIndex(const double source, const double pixel, int isParallel, double aMin, double aMax, enum axis ax){
+    struct ranges idxs;
+    double firstPlane, lastPlane;
+    int voxelDim;
+
+    if(ax == X){
+        voxelDim = VOXEL_X;
+        firstPlane = getXPlane(0);
+        lastPlane = getXPlane(nPlanes[X] - 1);
+    } else if( ax == Y){
+        voxelDim = VOXEL_Y;
+        firstPlane = getYPlane(0);
+        lastPlane = getYPlane(nPlanes[Y] - 1);
+    } else {
+        voxelDim = VOXEL_Z;
+        firstPlane = getZPlane(0);
+        lastPlane = getZPlane(nPlanes[Z] - 1);
+    }
+
+    //gets range of indeces of XZ parallel planes
+    if(isParallel != Y){
+        if(pixel - source >= 0){
+            idxs.minIndx = nPlanes[ax] - ceil((lastPlane - aMin * (pixel - source) - source) / voxelDim);
+            idxs.maxIndx = 1 + floor((aMax * (pixel - source) + source - firstPlane) / voxelDim);
+        } else {
+            idxs.minIndx = nPlanes[ax] - ceil((lastPlane - aMax * (pixel - source) - source) / voxelDim);
+            idxs.maxIndx = floor((aMin * (pixel - source) + source - firstPlane) / voxelDim);
+        }
+    } else {
+        idxs.minIndx = 0;
+        idxs.maxIndx = 0;
+    }
+    return idxs;
+}
+
+
+
+/**
  * Computes each parametric value of the intersection between the ray and the planes whose index is in the range planeIndexRange.
- * 'source' and 'pixel' are the points that identify the ray.
- * 'planeIndexRange' is a structure containing the ranges of indeces of planes for each axis.
+ * 'source' and 'pixel' are the components along the axis ortogonal to the plane of the two points defining the ray .
+ * 'planeIndexRange' is a structure containing the ranges of indeces of planes.
  * 'a' is a pointer to the array on which to store the parametrical values.
  * 'ax' is the axis orthogonal to the set of planes to which compute the intersection.
 */
-void getAllIntersections(const struct point source, const struct point pixel, const struct ranges planeIndexRange, double *a, enum axis ax){
+void getAllIntersections(const double source, const double pixel, const struct ranges planeIndexRange, double *a, enum axis ax){
     int start = 0, end = 0;
     int direction = 1;
-    double plane;
     double d;
+
+    start = planeIndexRange.minIndx;
+    end = planeIndexRange.maxIndx;
+    double plane[end - start];
     if(ax == X){
-        start = planeIndexRange.xMinIndx;
-        end = planeIndexRange.xMaxIndx;
-        plane = getXPlane(start);
+        plane[0] = getXPlane(start);
         d = VOXEL_X;
-        if(pixel.x - source.x < 0){
-            plane = getXPlane(end);
-            direction = -1;
+        if(pixel - source < 0){
+            plane[0] = getXPlane(end);
+            d = -VOXEL_X;
         }
     } else if(ax == Y){
-        start = planeIndexRange.yMinIndx;
-        end = planeIndexRange.yMaxIndx;
-        plane = getYPlane(start);
+        plane[0] = getYPlane(start);
         d = VOXEL_Y;
-        if(pixel.y - source.y < 0){
-            plane = getYPlane(end);
-            direction = -1;
+        if(pixel - source < 0){
+            plane[0] = getYPlane(end);
+            d = -VOXEL_Y;
         }
-    } else if(ax == Z) {
-        start = planeIndexRange.zMinIndx;
-        end = planeIndexRange.zMaxIndx;
-        plane = getZPlane(start);
+    } else if(ax == Z){
+        plane[0] = getZPlane(start);
         d = VOXEL_Z;
-        if(pixel.z - source.z < 0){
-            plane = getZPlane(end);
-            direction = -1;
+        if(pixel - source < 0){
+            plane[0] = getZPlane(end);
+            d = -VOXEL_Z;
         }
-    } else
-        assert(0);
+    } else assert(0);
 
-    for (int i = start; i < end; i++){
-        getIntersection(source, pixel, plane, ax, &a[i - start]);
-        plane += d * direction;
+    for (int i = 1; i < end - start; i++){
+        plane[i] = plane[i-1] + d;
     }
-
+    getIntersection(source, pixel, plane, end - start, a);
 }
+
 
 /**
  * Merges two sorted arrays into one single sorted array.
@@ -517,11 +436,64 @@ struct point getPixel(int r, int c, int angle){
     return pixel;
 }
 
+/**
+ * Returns the planes of the object's sides orthogonal to the 'x' axis.
+ * 'planes' is the pointer to an array of two elements.
+ */
+void getSidesXPlanes(double *planes){
+    planes[0] = getXPlane(0);
+    planes[1] = getXPlane(nPlanes[X] - 1);
+}
+
+/**
+ * Returns the planes of the object's sides orthogonal to the 'y' axis.
+ * 'planes' is the pointer to an array of two elements.
+ */
+void getSidesYPlanes(double *planes, int slice){
+    planes[0] = getYPlane(slice);
+    planes[1] = getYPlane(min(nPlanes[Y] - 1, OBJ_BUFFER + slice));
+}
+
+/**
+ * Returns the planes of the object's sides orthogonal to the 'z' axis.
+ * 'planes' is the pointer to an array of two elements.
+ */
+void getSidesZPlanes(double *planes){
+    planes[0] = getZPlane(0);
+    planes[1] = getZPlane(nPlanes[Z] - 1);
+}
+
+/**
+ * Computes the absorption the radiological path of a ray given two points.
+ * 'source' and 'pixel' are the points defining the ray.
+ * 'angle' is an index that numbers the current position.
+ * 'a' is an array containing the paramerter values of the intersections between the ray and voxels.
+ * 'lenA' is the length of the array 'a'.
+ * 'slice' is the index of the sub-section of the object.
+ * 'f' is an array that stores the coefficients of the voxels cointained in the sub-section.
+ */
+double computeAbsorption(struct point source, struct point pixel, int angle, double *a, int lenA, int slice, double *f){
+    const double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
+    
+    double absorbment = 0.0;
+
+    for(int i = 0; i < lenA - 1; i ++){
+        const double segments = d12 * (a[i + 1] - a[i]);
+        const double aMid = (a[i + 1] + a[i]) / 2;
+        const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
+        const int yRow = minABC((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(slice)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
+        const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
+
+        absorbment += f[(yRow) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
+    }
+    return absorbment;
+}
+
 
 /**
  * Computes the projection of a sub-section of the object onto the detector for each source position.
  * 'slice' is the index of the sub-section of the object.
- * 'f' stores the coefficients of the voxels cointained in the sub-section.
+ * 'f' is an array stores the coefficients of the voxels cointained in the sub-section.
  * 'absorbment' is the resulting array, contains the value of absorbtion for each pixel.
  * 'absMax' is the maximum absorbtion computed.
  * 'absMax' is the minimum absorbtion computed.
@@ -557,53 +529,54 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
                     pixel = getPixel(r,c,angle);
                 }
 
-                //computes Min-Max parametric value 
+
+                //computes Min-Max parametric values
                 double aMin, aMax;
-                int isXParallel = 0, isYParallel = 0, isZParallel = 0;
-                isXParallel = getSidesIntersection(source, pixel, &temp[X][0], &temp[X][1], X, slice);
-                isYParallel = getSidesIntersection(source, pixel, &temp[Y][0], &temp[Y][1], Y, slice);
-                isZParallel = getSidesIntersection(source, pixel, &temp[Z][0], &temp[Z][1], Z, slice);
+                double temp2[2];
                 int isParallel = -1;
-                isParallel = isXParallel == -1 ? isParallel : isXParallel; 
-                isParallel = isYParallel == -1 ? isParallel : isYParallel; 
-                isParallel = isZParallel == -1 ? isParallel : isZParallel; 
+                getSidesXPlanes(temp2);
+                if(!getIntersection(source.x, pixel.x, temp2, 2, &temp[X][0])){
+                    isParallel = X;
+                }
+                getSidesYPlanes(temp2, slice);
+                if(!getIntersection(source.y, pixel.y, temp2, 2, &temp[Y][0])){
+                    isParallel = Y;
+                }
+                getSidesZPlanes(temp2);
+                if(!getIntersection(source.z, pixel.z, temp2, 2, &temp[Z][0])){
+                    isParallel = Z;
+                }
 
                 aMin = getAMin(temp, isParallel);
                 aMax = getAMax(temp, isParallel);
 
                 if(aMin < aMax){
                     //computes Min-Max plane indexes 
-                    const struct ranges indeces = getRangeOfIndex(source, pixel, isParallel, aMin, aMax);
+                    struct ranges indeces[3];
+                    indeces[X] = getRangeOfIndex(source.x, pixel.x, isParallel, aMin, aMax, X);
+                    indeces[Y] = getRangeOfIndex(source.y, pixel.y, isParallel, aMin, aMax, Y);
+                    indeces[Z] = getRangeOfIndex(source.z, pixel.z, isParallel, aMin, aMax, Z);
 
                     //computes lenghts of the arrays containing parametric value of the intersection with each set of parallel planes
-                    int lenX = indeces.xMaxIndx - indeces.xMinIndx;
-                    int lenY = indeces.yMaxIndx - indeces.yMinIndx;
-                    int lenZ = indeces.zMaxIndx - indeces.zMinIndx;
+                    int lenX = indeces[X].maxIndx - indeces[X].minIndx;
+                    int lenY = indeces[Y].maxIndx - indeces[Y].minIndx;
+                    int lenZ = indeces[Z].maxIndx - indeces[Z].minIndx;
                     lenX = lenX < 0 ? 0 : lenX;
                     lenY = lenY < 0 ? 0 : lenY;
                     lenZ = lenZ < 0 ? 0 : lenZ;
                     const int lenA = lenX + lenY + lenZ;
 
                     //computes ray-planes intersection Nx + Ny + Nz
-                    getAllIntersections(source, pixel, indeces, aX, X);
-                    getAllIntersections(source, pixel, indeces, aY, Y);
-                    getAllIntersections(source, pixel, indeces, aZ, Z);
+                    getAllIntersections(source.x, pixel.x, indeces[X], aX, X);
+                    getAllIntersections(source.y, pixel.y, indeces[Y], aY, Y);
+                    getAllIntersections(source.z, pixel.z, indeces[Z], aZ, Z);
 
                     //computes segments Nx + Ny + Nz
                     mergeABC(aX, aY, aZ, lenX, lenY, lenZ, aMerged);
 
                     //associates each segment to the respective voxel Nx + Ny + Nz
-                    const double d12 = sqrt(pow(pixel.x - source.x, 2) + pow(pixel.y - source.y, 2) + pow(pixel.z - source.z, 2));
                     const int pixelIndex = angle * nSidePixels * nSidePixels + r *nSidePixels + c;
-                    for(int i = 0; i < lenA - 1; i ++){
-                        segments = d12 * (aMerged[i + 1] - aMerged[i]);
-                        const double aMid = (aMerged[i + 1] + aMerged[i]) / 2;
-                        const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
-                        const int yRow = minABC((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(0)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
-                        const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
-
-                        absorbment[pixelIndex] += f[(yRow - slice) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
-                    }
+                    absorbment[pixelIndex] += computeAbsorption(source, pixel, angle, aMerged, lenA, slice, f);
                     amax = fmax(amax, absorbment[pixelIndex]);
                     amin = fmin(amin, absorbment[pixelIndex]);
 
@@ -620,7 +593,7 @@ int main(int argc, char *argv[])
 {
 
 
-    int n = 1259;
+    int n = 2352;
     int objectType = 0;
     if(argc > 4){
         fprintf(stderr,"Usage: %s [0-1] [object Type]\n First parameter must be 0 or 1, it indicates whether to rotate the detector (0) or keep it stationary (1); object type must be 1,2 or 3.",argv[0]);
