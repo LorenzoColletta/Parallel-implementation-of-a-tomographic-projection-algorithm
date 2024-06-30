@@ -8,8 +8,8 @@
 The first parameter is the number of mesuring unit per side of the detector.
 
 The second parameter must be either 0 or 1: 
-* in case 1 is given, the projections are computed on a rotating detector;
-* in case 0 is given, projections are computed on a stationary detector;
+* in case 0 is given, the projections are computed on a rotating detector;
+* in case 1 is given, projections are computed on a stationary detector;
 * in case no parameter is given, 0 is the default behavior.
 
 The third parameter can be:
