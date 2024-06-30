@@ -494,7 +494,7 @@ double computeAbsorption(struct point source, struct point pixel, int angle, dou
         const double segments = d12 * (a[i + 1] - a[i]);
         const double aMid = (a[i + 1] + a[i]) / 2;
         const int xRow = min((int)((source.x + aMid * (pixel.x - source.x) - getXPlane(0)) / VOXEL_X), nVoxel[X] - 1);
-        const int yRow = min3((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(slice)) / VOXEL_Y), nVoxel[Y] - 1, slice + OBJ_BUFFER - 1);
+        const int yRow = min3((int)((source.y + aMid * (pixel.y - source.y) - getYPlane(slice)) / VOXEL_Y), nVoxel[Y] - 1, OBJ_BUFFER - 1);
         const int zRow = min((int)((source.z + aMid * (pixel.z - source.z) - getZPlane(0)) / VOXEL_Z), nVoxel[Z] - 1);
 
         absorbment += f[(yRow) * nVoxel[X] * nVoxel[Z] + zRow * nVoxel[Z] + xRow] * segments;
