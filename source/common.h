@@ -13,10 +13,20 @@
 #define ANGULAR_TRAJECTORY 90                   // total angular distance traveled by the source 
 #define POSITIONS_ANGULAR_DISTANCE 15           // angular distance between each source position
 
-#define OBJECT_SIDE_LENGTH                      // side length of the object
-#define DETECTOR_SIDE_LENGTH                    // side lenth of the detector
-#define DISTANCE_OBJECT_DETECTOR                // distance between the object's center and the detector
-#define DISTANCE_OBJECT_SOURCE                  // distance between the object's center and the source position
+#define OBJECT_SIDE_LENGTH        100000        // side length of the object
+#define DETECTOR_SIDE_LENGTH      200000        // side lenth of the detector
+#define DISTANCE_OBJECT_DETECTOR  150000        // distance between the object's center and the detector
+#define DISTANCE_OBJECT_SOURCE    600000        // distance between the object's center and the source position
+
+/**
+ * The following contsants represent the reference value for gl_nVoxel and gl_nPlanes variables.
+ */
+#define N_VOXEL_X       (OBJECT_SIDE_LENGTH / VOXEL_X_DIM)              // number of voxel the object is composed of along the X axis
+#define N_VOXEL_Y       (OBJECT_SIDE_LENGTH / VOXEL_Y_DIM)              // number of voxel the object is composed of along the Y axis
+#define N_VOXEL_Z       (OBJECT_SIDE_LENGTH / VOXEL_Z_DIM)              // number of voxel the object is composed of along the Z axis
+#define N_PLANES_X      ((OBJECT_SIDE_LENGTH / VOXEL_X_DIM) + 1)        // number of planes along the X axis 
+#define N_PLANES_Y      ((OBJECT_SIDE_LENGTH / VOXEL_Y_DIM) + 1)        // number of planes along the Y axis 
+#define N_PLANES_Z      ((OBJECT_SIDE_LENGTH / VOXEL_Z_DIM) + 1)        // number of planes along the Z axis
 
 /**
  * The following global variables represent the input parameters needed to set up the environment.
@@ -33,8 +43,7 @@ extern int gl_voxelXDim;                        // voxel side along x-axis
 extern int gl_voxelYDim;                        // voxel side along y-axis
 extern int gl_voxelZDim;                        // voxel side along z-axis
 extern int gl_nVoxel[3];                        // an array containing the number of voxel the object is composed of along the X axis [0], Y axis [1], Z axis [2]
-
-
+extern int gl_nPlanes[3];                       // an array containing the number of planes along the X axis [0], Y axis [1], Z axis [2]
 
 
 
