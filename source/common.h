@@ -46,4 +46,30 @@ extern int gl_nVoxel[3];                        // an array containing the numbe
 extern int gl_nPlanes[3];                       // an array containing the number of planes along the X axis [0], Y axis [1], Z axis [2]
 
 
-
+/**
+ * Function that initializes the global variables.
+ * 'gl_pixelDim' is the side length of a pixel of the detector        
+ * 'gl_angularTrajectory' is the total angular distance traveled by the source 
+ * 'gl_positionsAngularDistance' is the angular distance between each source position
+ * 'gl_objectSideLenght' is the side length of the object
+ * 'gl_detectorSideLength' is the side lenth of the detector                   
+ * 'gl_distanceDetectorObject' is the distance between the object's center and the detector           
+ * 'gl_distanceDetectorSource' is the distance between the object's center and the source position
+ * 'gl_voxelXDim' is the voxel side along x-axis
+ * 'gl_voxelYDim' is the voxel side along y-axis
+ * 'gl_voxelZDim' is the voxel side along z-axis
+ * 'gl_nVoxel' is the array containing the number of voxel the object is composed of along the X axis [0], Y axis [1], Z axis [2]
+ * 'gl_nPlanes' is the array containing the number of planes along the X axis [0], Y axis [1], Z axis [2]
+ */
+void environmentParametersInit(int gl_pixelDim,
+                                int gl_angularTrajectory,
+                                int gl_positionsAngularDistance,
+                                int gl_objectSideLenght,
+                                int gl_detectorSideLength,
+                                int gl_distanceDetectorObject,
+                                int gl_distanceDetectorSource,
+                                int gl_voxelXDim,
+                                int gl_voxelYDim,
+                                int gl_voxelZDim,
+                                int gl_nVoxel[3],
+                                int gl_nPlanes[3]);
