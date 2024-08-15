@@ -65,8 +65,8 @@ extern int gl_angularTrajectory;                // total angular distance travel
 extern int gl_positionsAngularDistance;         // angular distance between each source position
 extern int gl_objectSideLenght;                 // side length of the object
 extern int gl_detectorSideLength;               // side lenth of the detector                   
-extern int gl_distanceDetectorObject;           // distance between the object's center and the detector           
-extern int gl_distanceDetectorSource;           // distance between the object's center and the source position
+extern int gl_distanceObjectDetector;           // distance between the object's center and the detector           
+extern int gl_distanceObjectSource;           // distance between the object's center and the source position
 extern int gl_voxelXDim;                        // voxel side along x-axis
 extern int gl_voxelYDim;                        // voxel side along y-axis
 extern int gl_voxelZDim;                        // voxel side along z-axis
@@ -81,8 +81,8 @@ extern int gl_nPlanes[3];                       // an array containing the numbe
  * 'positionsAngularDistance' is the angular distance between each source position
  * 'objectSideLenght' is the side length of the object
  * 'detectorSideLength' is the side lenth of the detector                   
- * 'distanceDetectorObject' is the distance between the object's center and the detector           
- * 'distanceDetectorSource' is the distance between the object's center and the source position
+ * 'distanceDetObjectector' is the distance between the object's center and the detector           
+ * 'distanceSouObjectrce' is the distance between the object's center and the source position
  * 'voxelXDim' is the voxel side along x-axis
  * 'voxelYDim' is the voxel side along y-axis
  * 'voxelZDim' is the voxel side along z-axis
@@ -94,8 +94,8 @@ void environmentParametersInit(int pixelDim,
                                 int positionsAngularDistance,
                                 int objectSideLenght,
                                 int detectorSideLength,
-                                int distanceDetectorObject,
-                                int distanceDetectorSource,
+                                int distanceDetObjectector,
+                                int distanceSouObjectrce,
                                 int voxelXDim,
                                 int voxelYDim,
                                 int voxelZDim,
