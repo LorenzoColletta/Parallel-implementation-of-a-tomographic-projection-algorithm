@@ -31,30 +31,29 @@
 /**
  * Enumerates the cartesian axis.
  */
-enum axis{
+typedef enum{
     X,
     Y,
     Z
-};
+} Axis;
 
 
 /**
  * Models a point of coordinates (x,y,z) in the cartesian coordinate system
  */
-struct point
-{
+typedef struct{
     double x;
     double y;
     double z;
-};
+} Point;
 
 /**
  * Models a structure containing the range of indices of the planes to compute the intersection with
  */
-struct ranges{
+typedef struct{
     int minIndx;
     int maxIndx;
-};
+} Ranges;
 
 
 /**
