@@ -29,6 +29,35 @@
 #define N_PLANES_Z      ((OBJECT_SIDE_LENGTH / VOXEL_Z_DIM) + 1)        // number of planes along the Z axis
 
 /**
+ * Enumerates the cartesian axis.
+ */
+enum axis{
+    X,
+    Y,
+    Z
+};
+
+
+/**
+ * Models a point of coordinates (x,y,z) in the cartesian coordinate system
+ */
+struct point
+{
+    double x;
+    double y;
+    double z;
+};
+
+/**
+ * Models a structure containing the range of indices of the planes to compute the intersection with
+ */
+struct ranges{
+    int minIndx;
+    int maxIndx;
+};
+
+
+/**
  * The following global variables represent the input parameters needed to set up the environment.
  * A reference to each variable value is provided by the previously defined constants.
  */
