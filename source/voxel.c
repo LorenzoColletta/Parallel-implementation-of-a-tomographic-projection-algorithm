@@ -1,5 +1,7 @@
 #include "voxel.h"
 #include "common.h"
+#include <math.h>
+#include <assert.h>
 
 void environmentParametersInit(int pixelDim,
                                 int angularTrajectory,
@@ -33,10 +35,10 @@ void environmentParametersInit(int pixelDim,
 }
 
 
-void init_tables( double *sinTable, double *cosTable ){
+void init_tables( double *sinTable, double *cosTable, int length){
     
     const int nTheta = (int)(gl_angularTrajectory / gl_positionsAngularDistance);                      //number of angular position
-    assert(nTheta < sizeof(sinTable)/sizeof(sinTable[0]));
+    assert(nTheta < length/sizeof(sinTable[0]));
 
     //iterates over each source  Ntheta
     for(int positionIndex = 0; positionIndex <= nTheta; positionIndex++){

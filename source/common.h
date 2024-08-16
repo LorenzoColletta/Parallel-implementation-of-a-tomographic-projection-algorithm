@@ -107,5 +107,6 @@ void environmentParametersInit(int pixelDim,
  * Initializes sine and cosine tables.
  * 'sinTable' is the pointer to the array for sine values.
  * 'cosTable' is the pointer to the array for cosine values.
+ * 'length' length of the previous arrays.
  */
-void init_tables( double *sinTable, double *cosTable );
+void init_tables( double *sinTable, double *cosTable, int length );
