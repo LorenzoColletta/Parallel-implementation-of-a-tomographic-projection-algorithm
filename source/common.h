@@ -66,7 +66,7 @@ extern int gl_positionsAngularDistance;         // angular distance between each
 extern int gl_objectSideLenght;                 // side length of the object
 extern int gl_detectorSideLength;               // side lenth of the detector                   
 extern int gl_distanceObjectDetector;           // distance between the object's center and the detector           
-extern int gl_distanceObjectSource;           // distance between the object's center and the source position
+extern int gl_distanceObjectSource;             // distance between the object's center and the source position
 extern int gl_voxelXDim;                        // voxel side along x-axis
 extern int gl_voxelYDim;                        // voxel side along y-axis
 extern int gl_voxelZDim;                        // voxel side along z-axis
@@ -101,3 +101,11 @@ void environmentParametersInit(int pixelDim,
                                 int voxelZDim,
                                 int nVoxel[3],
                                 int nPlanes[3]);
+
+
+/**
+ * Initializes sine and cosine tables.
+ * 'sinTable' is the pointer to the array for sine values.
+ * 'cosTable' is the pointer to the array for cosine values.
+ */
+void init_tables( double *sinTable, double *cosTable );
