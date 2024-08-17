@@ -3,13 +3,27 @@ Output file structure:
 
 The voxel grid (three dimensional) is represented as a stack of two dimensional grids. 
 
-First, three (integer) values are given:
- - Number of voxels along the X dimension.
- - Number of voxels along the Y dimension.
- - Number of voxels along the Z dimension.
+First a sequence of 16 integer values is given, representing on order:
+ - gl_pixelDim
+ - gl_angularTrajectory
+ - gl_positionsAngularDistance
+ - gl_objectSideLenght
+ - gl_detectorSideLength
+ - gl_distanceObjectDetector
+ - gl_distanceObjectSource
+ - gl_voxelXDim
+ - gl_voxelYDim
+ - gl_voxelZDim
+ - gl_nVoxel[0]
+ - gl_nVoxel[1]
+ - gl_nVoxel[2]
+ - gl_nPlanes[0]
+ - gl_nPlanes[1]
+ - gl_nPlanes[2]
 
-Then, the values composing the voxel grid are given (double).
-Ogni sequenza di lunghezza pari al numero di voxel lungo l'asse X moltiplicata per il numero di veoxel lungo l'asse Z rappresenta una griglia.
+
+Then, the values composing the voxel grid are given (double) for a total of gl_nVoxel[0]*gl_nVoxel[1]*gl_nVoxel[2] values.
+Each sequence of length gl_nVoxel[0]*gl_nVoxel[1] represents a grid.
 The order followed in writing the two-dimensional grids is starting from the bottom one.
 
 */
@@ -36,6 +50,30 @@ int gl_voxelZDim = VOXEL_Z_DIM;
 int gl_nVoxel[3];
 int gl_nPlanes[3];
 
+int writeSetUp(FILE* filePointer){
+    int setUp[] = { gl_pixelDim,
+                    gl_angularTrajectory,
+                    gl_positionsAngularDistance,
+                    gl_objectSideLenght,
+                    gl_detectorSideLength,
+                    gl_distanceObjectDetector,
+                    gl_distanceObjectSource,
+                    gl_voxelXDim,
+                    gl_voxelYDim,
+                    gl_voxelZDim,
+                    gl_nVoxel[0],
+                    gl_nVoxel[1],
+                    gl_nVoxel[2],
+                    gl_nPlanes[0],
+                    gl_nPlanes[1],
+                    gl_nPlanes[2],
+                    };
+
+    if(!fwrite(setUp, sizeof(int), sizeof(setUp), filePointer)){
+        printf("Unable to write on file!");
+        exit(1);
+    }
+}
 
 int main(int argc, char *argv[])
 {
