@@ -35,7 +35,7 @@ void environmentParametersInit(int pixelDim,
 }
 
 
-void init_tables( double *sinTable, double *cosTable, int length){
+void initTables( double *sinTable, double *cosTable, int length){
     
     const int nTheta = (int)(gl_angularTrajectory / gl_positionsAngularDistance);                      //number of angular position
     assert(nTheta < length/sizeof(sinTable[0]));
