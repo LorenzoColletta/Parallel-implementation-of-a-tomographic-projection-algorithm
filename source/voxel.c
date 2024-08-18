@@ -90,7 +90,7 @@ void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
 */
 void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
 {
-#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, gl_nVoxel, offset, diameter, gl_objectSideLenght)
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, gl_nVoxel, offset, diameter, gl_objectSideLenght, gl_voxelYDim, gl_voxelXDim, gl_voxelZDim)
     for (int n = 0; n < nOfSlices; n++) {
         for (int r = 0; r < gl_nVoxel[Z]; r++) {
             for (int c = 0; c < gl_nVoxel[X]; c++) {
@@ -119,14 +119,15 @@ void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
 void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, const int sideLength){
     const int innerToOuterDiff = gl_nVoxel[X] / 2 - sideLength / 2;
     const int rightSide = innerToOuterDiff + sideLength;
-    const Point sphereCenter = {-sideLength / 4, -sideLength / 4, sideLength / 4};
+    const Point sphereCenter = {-sideLength * gl_voxelXDim / 4, -sideLength * gl_voxelYDim / 4, -sideLength * gl_voxelZDim / 4};
 
     // iterates over each voxel of the grid 
-#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, gl_nVoxel, innerToOuterDiff, rightSide, sphereCenter, gl_objectSideLenght)
+#pragma omp parallel for collapse(3) default(none) shared(f, nOfSlices, offset, sideLength, gl_nVoxel, innerToOuterDiff, rightSide, sphereCenter, gl_objectSideLenght, gl_voxelYDim, gl_voxelXDim, gl_voxelZDim)
     for(int n = 0 ; n < nOfSlices; n++){
         for(int i = 0; i < gl_nVoxel[Z]; i++){
             for(int j = 0; j < gl_nVoxel[X]; j++){
 
+                f[(gl_nVoxel[Z]) * i + j + n * gl_nVoxel[X] * gl_nVoxel[Z]] = 0;
                 if ( (i >= innerToOuterDiff) &&
                      (i <= rightSide) &&
                      (j >= innerToOuterDiff) &&
@@ -141,7 +142,7 @@ void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, const int
                     temp.z = -(gl_objectSideLenght / 2) + (gl_voxelZDim / 2) + (i) * gl_voxelZDim;
                     const double distance = sqrt(pow(temp.x - sphereCenter.x, 2) + pow(temp.y - sphereCenter.y, 2) + pow(temp.z - sphereCenter.z, 2));
                     
-                    if(distance > sideLength / 10){
+                    if(distance > sideLength * gl_voxelXDim / 6){
                         // voxel position is inside the cubic object and inside the sperical cavity
                         f[(gl_nVoxel[Z]) * i + j + n * gl_nVoxel[X] * gl_nVoxel[Z]] = 1.0;
                     }

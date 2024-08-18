@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include "common.h"
 
 #define OBJ_BUFFER 1000
 

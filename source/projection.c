@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
-#include "projection.h"
 #include "common.h"
+#include "projection.h"
 
 extern double *sineTable;
 extern double *cosineTable;
@@ -396,7 +396,7 @@ void computeProjections(int slice, double *f, double *absorbment, double *absMax
         const Point source = getSource(positionIndex);
 
         //iterates over each pixel of the detector 
-#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, positionIndex, source, slice, f, absorbment, stationaryDetector, nTheta, gl_nVoxel) private(temp, aX, aY, aZ, aMerged) reduction(min:amin) reduction(max:amax)
+#pragma omp parallel for collapse(2) schedule(dynamic) default(none) shared(nSidePixels, positionIndex, source, slice, f, absorbment, nTheta, gl_nVoxel) private(temp, aX, aY, aZ, aMerged) reduction(min:amin) reduction(max:amax)
         for(int r = 0; r < nSidePixels; r++){
             for(int c = 0; c < nSidePixels; c++){
                 Point pixel;
