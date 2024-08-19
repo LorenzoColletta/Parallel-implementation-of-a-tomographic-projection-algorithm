@@ -69,10 +69,10 @@ int writeSetUp(FILE* filePointer){
                     gl_nPlanes[2],
                     };
 
-    if(!fwrite(setUp, sizeof(int), sizeof(setUp), filePointer)){
-        printf("Unable to write on file!");
-        exit(1);
+    if(!fwrite(setUp, sizeof(int), sizeof(setUp) / sizeof(int), filePointer)){
+        return 0;
     }
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     
     int objectType = 0;                         // represents the object type chosen
 
-    if(argc > 4 || argc < 1){
+    if(argc > 4 || argc < 2){
         fprintf(stderr,"Usage:\n\t%s output.dat [integer] [object Type]\n - First parameter is the name of the file to store the output in; "
                         "\n - Second parameter is the number of pixel per side of the detector, if not given 2352 is default; "
                         "\n - Third parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube), "
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
     }
 
     //Write the voxel grid dimensions on file
-    if(!fwrite(gl_nVoxel, sizeof(int), 3, filePoiter)){
+    if(!writeSetUp(filePoiter)){
         printf("Unable to write on file!");
         exit(3);
     }
@@ -152,13 +152,13 @@ int main(int argc, char *argv[])
         }
 
         if(slice < gl_nVoxel[Y]){
-            printf("Size: %lu\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER);
+            printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER);
             if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER, filePoiter)){
                 printf("Unable to write on file!");
                 exit(4);
             }
         } else {
-            printf("Size: %lu\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]));
+            printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]));
             if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]), filePoiter)){
                 printf("Unable to write on file!");
                 exit(5);
