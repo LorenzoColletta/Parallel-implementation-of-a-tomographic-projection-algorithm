@@ -47,9 +47,20 @@ int gl_distanceObjectSource;
 int gl_voxelXDim = VOXEL_X_DIM;
 int gl_voxelYDim = VOXEL_Y_DIM;
 int gl_voxelZDim = VOXEL_Z_DIM;
-int gl_nVoxel[3];
-int gl_nPlanes[3];
 
+/**
+ * The following arrays' value must be computed as follows:
+ *     gl_nVoxel[3] = {gl_objectSideLenght / gl_voxelXDim, gl_objectSideLenght / gl_voxelYDim, gl_objectSideLenght / gl_voxelZDim};
+ *     gl_nPlanes[3] = {(gl_objectSideLenght / gl_voxelXDim) + 1, (gl_objectSideLenght / gl_voxelYDim) + 1, (gl_objectSideLenght / gl_voxelZDim) + 1};
+ */
+int gl_nVoxel[3] = {N_VOXEL_X, N_VOXEL_Y, N_VOXEL_Z};
+int gl_nPlanes[3] = {N_PLANES_X, N_PLANES_Y, N_PLANES_Z};
+
+/**
+ * Stores the environment values used to compute the voxel grid into the specified binary file.
+ * 'filePointer' the file pointer to store the values in.
+ * @returns 0 in case of writing failure, 1 otherwise.
+ */
 int writeSetUp(FILE* filePointer){
     int setUp[] = { gl_pixelDim,
                     gl_angularTrajectory,
@@ -87,9 +98,9 @@ int main(int argc, char *argv[])
 
     if(argc > 4 || argc < 2){
         fprintf(stderr,"Usage:\n\t%s output.dat [integer] [object Type]\n - First parameter is the name of the file to store the output in; "
-                        "\n - Second parameter is the number of pixel per side of the detector, if not given 2352 is default; "
-                        "\n - Third parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube), "
-                        "if not passed 3 (solid cube) is default.\n",argv[0]);
+                        "\n - Second parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube), if not passed 3 (solid cube) is default."
+                        "\n - Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value, if no value is given, default values are used;\n"
+                        ,argv[0]);
 
         return EXIT_FAILURE;
     }
@@ -97,17 +108,16 @@ int main(int argc, char *argv[])
         fileName = argv[1];
     }
     if(argc > 2){
-        n = atoi(argv[2]);
+        objectType = atoi(argv[2]);
     }
     if(argc > 3){
-        objectType = atoi(argv[3]);
+        n = atoi(argv[3]);
+        //global variables set-up
+        gl_objectSideLenght = n * gl_voxelXDim * ((double)OBJECT_SIDE_LENGTH / (VOXEL_X_DIM * N_PIXEL_ALONG_SIDE));
+        gl_detectorSideLength = n * gl_pixelDim;
+        gl_distanceObjectDetector = 1.5 * gl_objectSideLenght;
+        gl_distanceObjectSource = 6 * gl_objectSideLenght;
     }
-
-    //global variables set-up
-    gl_objectSideLenght = n * gl_voxelXDim * ((double)OBJECT_SIDE_LENGTH / (VOXEL_X_DIM * N_PIXEL_ALONG_SIDE));
-    gl_detectorSideLength = n * gl_pixelDim;
-    gl_distanceObjectDetector = 1.5 * gl_objectSideLenght;
-    gl_distanceObjectSource = 6 * gl_objectSideLenght;
 
     gl_nVoxel[X] = gl_objectSideLenght / gl_voxelXDim;
     gl_nVoxel[Y] = gl_objectSideLenght / gl_voxelYDim;
