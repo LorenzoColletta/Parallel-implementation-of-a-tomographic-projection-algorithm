@@ -1,7 +1,23 @@
 /***
-Output file structure:
+This program generates a tri-dimesnional voxel grid and stores it into the specified binary file.
 
-The voxel grid (three dimensional) is represented as a stack of two dimensional grids. 
+COMPILE:
+
+    gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -o inputgeneration
+
+RUN:
+
+    inputgeneration output.dat [object Type] [integer] 
+
+- First parameter is the name of the file to store the output in;
+- Second parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube), if not passed 3 (solid cube) is default;
+- Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value, if no value is given, default values are used;
+
+OUTPUT FILE STRUCTURE:
+
+The voxel (three-dimensional) grid is represented as a stack of two-dimensional grids.
+Considering a three-dimensional Cartesian system where the x-axis is directed from left to right, the y-axis is directed upwards, and the z-axis is orthogonal to them,
+a two-dimensional grid can be viewed as a horizontal slice, orthogonal to the y-axis, of the object.
 
 First a sequence of 16 integer values is given, representing on order:
  - gl_pixelDim
@@ -21,8 +37,7 @@ First a sequence of 16 integer values is given, representing on order:
  - gl_nPlanes[1]
  - gl_nPlanes[2]
 
-
-Then, the values composing the voxel grid are given (double) for a total of gl_nVoxel[0]*gl_nVoxel[1]*gl_nVoxel[2] values.
+Then, the values composing the voxel grid are given for a total of gl_nVoxel[0]*gl_nVoxel[1]*gl_nVoxel[2] (double) values.
 Each sequence of length gl_nVoxel[0]*gl_nVoxel[1] represents a grid.
 The order followed in writing the two-dimensional grids is starting from the bottom one.
 
@@ -37,13 +52,19 @@ The order followed in writing the two-dimensional grids is starting from the bot
 #define DEFAULT_WORK_SIZE 2352
 #define N_PIXEL_ALONG_SIDE (DETECTOR_SIDE_LENGTH / PIXEL_DIM)
 
+/**
+ * The following global variables are defined as according to common.h header file.
+ * In order to use them with the value given below, the third parameter must not be passed at launch of 'inputgeneration' program.
+ * In case the third value is given at launch, this will be used to compute the value of gl_objectSideLenght, gl_detectorSideLength, gl_distanceObjectDetector 
+ * and gl_distanceObjectSource; the remaining variables will keep the value given below.
+ */
 int gl_pixelDim = PIXEL_DIM;
 int gl_angularTrajectory = ANGULAR_TRAJECTORY;
 int gl_positionsAngularDistance = POSITIONS_ANGULAR_DISTANCE;
-int gl_objectSideLenght;
-int gl_detectorSideLength;
-int gl_distanceObjectDetector;
-int gl_distanceObjectSource;
+int gl_objectSideLenght = OBJECT_SIDE_LENGTH;
+int gl_detectorSideLength = DETECTOR_SIDE_LENGTH;
+int gl_distanceObjectDetector = DISTANCE_OBJECT_DETECTOR;
+int gl_distanceObjectSource = DISTANCE_OBJECT_SOURCE;
 int gl_voxelXDim = VOXEL_X_DIM;
 int gl_voxelYDim = VOXEL_Y_DIM;
 int gl_voxelZDim = VOXEL_Z_DIM;

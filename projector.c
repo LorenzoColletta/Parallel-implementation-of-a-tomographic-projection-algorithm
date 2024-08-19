@@ -1,3 +1,37 @@
+/***
+This program implements the Siddon algorithm to compute 2-dimensional projections of a three dimensional voxel grid.
+
+COMPILE:
+This program can be compiled so that: it returns the output in a text file in pgm format, in this case the calculated 
+values ​​are converted to a gray scale from 0 to 255; returns the output in a binary file, in this case the values ​​are 
+stored as double values ​​for maximum accuracy, the structure of the file is described below.
+
+gcc command:
+
+    gcc -Wall -Wpedantic -std=c99 -fopenmp projector.c ./source/voxel.c -I./source/ -o projector
+
+Compilation to use a binary file as output:
+
+    gcc -Wall -Wpedantic -std=c99 -fopenmp -DBINARY projector.c ./source/voxel.c -I./source/ -o projector
+
+RUN:
+
+    projector input.dat output.dat/output.pgm 
+
+- First parameter is the name of the input file;
+- Second parameter is the name of a text or a binary file to store the output in.
+
+BINARY FILE STRUCTURE:
+
+The computed output is a set of projection images each with a resolution of 'n'*'n'.
+The output file is structured as follows:
+- the first value is the number of images produced (integer type)
+- the second value is 'n' (integer type), the resolution of the image side
+- each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from which the image was computed
+- an image is a sequence of n*n double values; the image is stored as a one-dimensional array, sorted first by the x coordinate and then by the z
+  coordinate (considering a three-dimensional Cartesian space with the x axis from left to right, the y axis oriented upwards and z perpendicular to them) 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -14,6 +48,9 @@ double omp_get_wtime( void ) { return 0; }
 #define OBJ_BUFFER 1000
 #define TABLES_DIM 1024
 
+/**
+ * The following global variables are defined as according to common.h header file.
+ */
 int gl_pixelDim;
 int gl_angularTrajectory;
 int gl_positionsAngularDistance;
@@ -27,9 +64,17 @@ int gl_voxelZDim;
 int gl_nVoxel[3];
 int gl_nPlanes[3];
 
+/**
+ * The following global variables are defined as according to projection.h header file.
+ */
 double *sineTable;
 double *cosineTable;
 
+/**
+ * Reeds the environment values used to compute the voxel grid from the specified binary file.
+ * 'filePointer' the file pointer to read the values from.
+ * @returns 0 in case of writing failure, 1 otherwise.
+ */
 int readSetUP(FILE* filePointer){
     int buffer[16];
     //read object parameters set up

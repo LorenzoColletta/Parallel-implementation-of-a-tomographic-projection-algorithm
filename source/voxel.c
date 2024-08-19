@@ -3,6 +3,9 @@
 #include <math.h>
 #include <assert.h>
 
+/**
+ * Implements environmentParametersInit as according to common.h header file.
+ */
 void environmentParametersInit(int pixelDim,
                                 int angularTrajectory,
                                 int positionsAngularDistance,
@@ -34,7 +37,9 @@ void environmentParametersInit(int pixelDim,
     gl_nPlanes[2] = nPlanes[2];
 }
 
-
+/**
+ * Implements initTables as according to common.h header file.
+ */
 void initTables( double *sinTable, double *cosTable, int length){
     
     const int nTheta = (int)(gl_angularTrajectory / gl_positionsAngularDistance);                      //number of angular position
@@ -50,11 +55,7 @@ void initTables( double *sinTable, double *cosTable, int length){
 
 
 /**
- * Generates a sub-section of a solid cubic object given its side length.
- * 'f' is the pointer to the array on which to store the sub-section.
- * 'nOfSlices' is the number of voxel along the Y axis.
- * 'offset' distance (in number of voxel) of the slices to be generated from the initial slice.
- * 'sideLength' length of the side of the cubic object
+ * Implements generateCubeSlice as according to voxel.h header file.
 */
 void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
     const int innerToOuterDiff = gl_nVoxel[X] / 2 - sideLength / 2;
@@ -82,11 +83,7 @@ void generateCubeSlice(double *f, int nOfSlices, int offset, int sideLength){
 }
 
 /**
- * Generates a sub-section of a solid spherical object given its diameter.
- * 'f' is the pointer to the array on which to store the sub-section.
- * 'nOfSlices' is the number of voxel along the Y axis.
- * 'offset' distance (in number of voxel) of the slices to be generated from the initial slice.
- * 'diameter' is the diameter of the sphere.
+ * Implements generateSphereSlice as according to voxel.h header file.
 */
 void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
 {
@@ -110,11 +107,7 @@ void generateSphereSlice(double *f, int nOfSlices, int offset, int diameter)
 }
 
 /**
- * Generates a sub-section of a solid cubic object with an internal spherical cavity.
- * 'f' is the pointer to the array on which to store the sub-section.
- * 'nOfSlices' is the number of voxel along the Y axis.
- * 'offset' distance (in number of voxel) of the slices to be generated from the initial slice.
- * 'sideLength' lenght of the side of the object.
+ * Implements generateCubeWithSphereSlice as according to voxel.h header file.
 */
 void generateCubeWithSphereSlice(double *f, int nOfSlices, int offset, const int sideLength){
     const int innerToOuterDiff = gl_nVoxel[X] / 2 - sideLength / 2;

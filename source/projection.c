@@ -8,6 +8,9 @@
 extern double *sineTable;
 extern double *cosineTable;
 
+/**
+ * Implements environmentParametersInit as according to common.h header file.
+ */
 void environmentParametersInit(int pixelDim,
                                 int angularTrajectory,
                                 int positionsAngularDistance,
@@ -39,7 +42,9 @@ void environmentParametersInit(int pixelDim,
     gl_nPlanes[2] = nPlanes[2];
 }
 
-
+/**
+ * Implements initTables as according to common.h header file.
+ */
 void initTables( double *sinTable, double *cosTable, int length){
     
     const int nTheta = (int)(gl_angularTrajectory / gl_positionsAngularDistance);                      //number of angular position
@@ -378,7 +383,9 @@ double computeAbsorption(Point source, Point pixel, int angle, double *a, int le
     return absorbment;
 }
 
-
+/**
+ * Implements computeProjections as according to projection.h header file.
+ */
 void computeProjections(int slice, double *f, double *absorbment, double *absMax, double *absMin){
     const int nTheta = (int)(gl_angularTrajectory / gl_positionsAngularDistance);                      //number of angular position
     const int nSidePixels = gl_detectorSideLength / gl_pixelDim;
