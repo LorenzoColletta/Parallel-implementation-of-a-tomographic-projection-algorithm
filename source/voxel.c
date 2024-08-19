@@ -42,8 +42,8 @@ void initTables( double *sinTable, double *cosTable, int length){
 
     //iterates over each source  Ntheta
     for(int positionIndex = 0; positionIndex <= nTheta; positionIndex++){
-        sinTable[positionIndex] = sin((gl_angularTrajectory / 2 - positionIndex * gl_positionsAngularDistance) * M_PI / 180);
-        cosTable[positionIndex] = cos((gl_angularTrajectory / 2 - positionIndex * gl_positionsAngularDistance) * M_PI / 180);
+        sinTable[positionIndex] = sin((-gl_angularTrajectory / 2 + positionIndex * gl_positionsAngularDistance) * M_PI / 180);
+        cosTable[positionIndex] = cos((-gl_angularTrajectory / 2 + positionIndex * gl_positionsAngularDistance) * M_PI / 180);
     }
 }
 

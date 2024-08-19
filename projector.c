@@ -142,18 +142,18 @@ int main(int argc, char *argv[])
 
 //write on file
 #ifdef BINARY
-    int header[] = {nTheta, nSidePixels, nSidePixels};
-    if(!fwrite(header, sizeof(int), 3, filePoiter)){
+    int header[] = {nTheta + 1, nSidePixels};
+    if(!fwrite(header, sizeof(int), 2, outputFilePointer)){
         printf("Unable to write on file!\n");
         exit(1);
     }
     for(int i = 0; i < nTheta; i++){
-        double angle = gl_angularTrajectory / 2 - i * gl_positionsAngularDistance;
-        if(!fwrite(angle, sizeof(double), 1, filePoiter)){
+        double angle = -gl_angularTrajectory / 2 + i * gl_positionsAngularDistance;
+        if(!fwrite(&angle, sizeof(double), 1, outputFilePointer)){
             printf("Unable to write on file!\n");
             exit(1);
         }
-        if(!fwrite(absorbment + i * nSidePixels * nSidePixels, sizeof(double), nSidePixels * nSidePixels, filePoiter)){
+        if(!fwrite(absorbment + i * nSidePixels * nSidePixels, sizeof(double), nSidePixels * nSidePixels, outputFilePointer)){
             printf("Unable to write on file!\n");
             exit(1);
         }
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     //iterates over each absorption value computed, prints a value between [0-255]
     fprintf(outputFilePointer,"P2\n%d %d\n255", nSidePixels, nSidePixels * (nTheta + 1));
     for(double positionIndex = 0; positionIndex <= nTheta; positionIndex ++){
-        double angle = gl_angularTrajectory / 2 - positionIndex * gl_positionsAngularDistance;
+        double angle = - gl_angularTrajectory / 2 + positionIndex * gl_positionsAngularDistance;
         fprintf(outputFilePointer,"\n#%lf",angle);
         for(int i = 0; i < nSidePixels; i++ ){
             fprintf(outputFilePointer,"\n");

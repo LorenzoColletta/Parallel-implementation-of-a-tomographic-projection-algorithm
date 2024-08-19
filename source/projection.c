@@ -47,8 +47,8 @@ void initTables( double *sinTable, double *cosTable, int length){
 
     //iterates over each source  Ntheta
     for(int positionIndex = 0; positionIndex <= nTheta; positionIndex++){
-        sinTable[positionIndex] = sin((gl_angularTrajectory / 2 - positionIndex * gl_positionsAngularDistance) * M_PI / 180);
-        cosTable[positionIndex] = cos((gl_angularTrajectory / 2 - positionIndex * gl_positionsAngularDistance) * M_PI / 180);
+        sinTable[positionIndex] = sin((- gl_angularTrajectory / 2 + positionIndex * gl_positionsAngularDistance) * M_PI / 180);
+        cosTable[positionIndex] = cos((- gl_angularTrajectory / 2 + positionIndex * gl_positionsAngularDistance) * M_PI / 180);
     }
 }
 
@@ -298,7 +298,7 @@ Point getSource(int index){
     Point source;
     
     source.z = 0;
-    source.x = -sineTable[index] * gl_distanceObjectSource;
+    source.x = sineTable[index] * gl_distanceObjectSource;
     source.y = cosineTable[index] * gl_distanceObjectSource;
     
     return source;
@@ -318,8 +318,8 @@ Point getPixel(int r, int c, int index){
     const double cosAngle = cosineTable[index];
     const double elementOffset =  gl_detectorSideLength / 2 - gl_pixelDim / 2;
 
-    pixel.x = (gl_distanceObjectDetector * sinAngle) + cosAngle * (-elementOffset + gl_pixelDim * c);
-    pixel.y = (-gl_distanceObjectDetector) * cosAngle + sinAngle * (-elementOffset + gl_pixelDim * c);
+    pixel.x = (-gl_distanceObjectDetector * sinAngle) + cosAngle * (-elementOffset + gl_pixelDim * c);
+    pixel.y = (-gl_distanceObjectDetector) * cosAngle - sinAngle * (-elementOffset + gl_pixelDim * c);
     pixel.z = -elementOffset + gl_pixelDim * r;
 
     return pixel;
