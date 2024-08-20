@@ -27,6 +27,8 @@ The computed output is a set of projection images each with a resolution of 'n'*
 The output file is structured as follows:
 - the first value is the number of images produced (integer type)
 - the second value is 'n' (integer type), the resolution of the image side
+- the third value is the maximum value computed (type double)
+- the third value is the minimum value computed (type double)
 - each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from which the image was computed
 - an image is a sequence of n*n double values; the image is stored as a one-dimensional array, sorted first by the x coordinate and then by the z
   coordinate (considering a three-dimensional Cartesian space with the x axis from left to right, the y axis oriented upwards and z perpendicular to them) 
@@ -187,12 +189,17 @@ int main(int argc, char *argv[])
 
 //write on file
 #ifdef BINARY
-    int header[] = {nTheta + 1, nSidePixels};
-    if(!fwrite(header, sizeof(int), 2, outputFilePointer)){
+    int matrixDetails[] = {nTheta + 1, nSidePixels};
+    if(!fwrite(matrixDetails, sizeof(int), 2, outputFilePointer)){
         printf("Unable to write on file!\n");
         exit(1);
     }
-    for(int i = 0; i < nTheta; i++){
+    double minMaxValues[] = {absMaxValue, absMinValue};
+    if(!fwrite(minMaxValues, sizeof(double), 2, outputFilePointer)){
+        printf("Unable to write on file!\n");
+        exit(1);
+    }
+    for(int i = 0; i <= nTheta; i++){
         double angle = -gl_angularTrajectory / 2 + i * gl_positionsAngularDistance;
         if(!fwrite(&angle, sizeof(double), 1, outputFilePointer)){
             printf("Unable to write on file!\n");
