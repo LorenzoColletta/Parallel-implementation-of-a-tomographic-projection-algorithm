@@ -29,9 +29,11 @@ The output file is structured as follows:
 - the second value is 'n' (integer type), the resolution of the image side
 - the third value is the maximum value computed (type double)
 - the third value is the minimum value computed (type double)
-- each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from which the image was computed
-- an image is a sequence of n*n double values; the image is stored as a one-dimensional array, sorted first by the x coordinate and then by the z
-  coordinate (considering a three-dimensional Cartesian space with the x axis from left to right, the y axis oriented upwards and z perpendicular to them) 
+- each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from 
+  which the image was computed
+- an image is a sequence of n*n double values; the image is stored as a one-dimensional array, sorted first by the x
+  coordinate and then by the z coordinate (considering a three-dimensional Cartesian space with the x axis from left 
+  to right, the y axis oriented upwards and z perpendicular to them) 
  */
 
 #include <stdio.h>

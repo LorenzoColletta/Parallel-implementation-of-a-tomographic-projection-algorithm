@@ -10,13 +10,16 @@ RUN:
     inputgeneration output.dat [object Type] [integer] 
 
 - First parameter is the name of the file to store the output in;
-- Second parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube), if not passed 3 (solid cube) is default;
-- Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value, if no value is given, default values are used;
+- Second parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube),
+  if not passed 3 (solid cube) is default;
+- Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value, 
+  if no value is given, default values are used;
 
 OUTPUT FILE STRUCTURE:
 
 The voxel (three-dimensional) grid is represented as a stack of two-dimensional grids.
-Considering a three-dimensional Cartesian system where the x-axis is directed from left to right, the y-axis is directed upwards, and the z-axis is orthogonal to them,
+Considering a three-dimensional Cartesian system where the x-axis is directed from left to right, the y-axis is 
+directed upwards, and the z-axis is orthogonal to them,
 a two-dimensional grid can be viewed as a horizontal slice, orthogonal to the y-axis, of the object.
 
 First a sequence of 16 integer values is given, representing on order:
@@ -55,8 +58,8 @@ The order followed in writing the two-dimensional grids is starting from the bot
 /**
  * The following global variables are defined as according to common.h header file.
  * In order to use them with the value given below, the third parameter must not be passed at launch of 'inputgeneration' program.
- * In case the third value is given at launch, this will be used to compute the value of gl_objectSideLenght, gl_detectorSideLength, gl_distanceObjectDetector 
- * and gl_distanceObjectSource; the remaining variables will keep the value given below.
+ * In case the third value is given at launch, this will be used to compute the value of gl_objectSideLenght, gl_detectorSideLength, 
+ * gl_distanceObjectDetector and gl_distanceObjectSource; the remaining variables will keep the value given below.
  */
 int gl_pixelDim = PIXEL_DIM;
 int gl_angularTrajectory = ANGULAR_TRAJECTORY;
