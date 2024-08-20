@@ -49,7 +49,7 @@ The output file is structured as follows:
 double omp_get_wtime( void ) { return 0; }
 #endif
 
-#define OBJ_BUFFER 1000
+#define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
 #define TABLES_DIM 1024
 
 /**

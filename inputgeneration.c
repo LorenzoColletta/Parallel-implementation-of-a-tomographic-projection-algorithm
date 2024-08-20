@@ -1,5 +1,5 @@
 /***
-This program generates a tri-dimesnional voxel grid and stores it into the specified binary file.
+This program generates a three-dimesnional voxel grid and stores it into the specified binary file.
 
 COMPILE:
 
@@ -40,9 +40,10 @@ First a sequence of 16 integer values is given, representing on order:
  - gl_nPlanes[1]
  - gl_nPlanes[2]
 
-Then, the values composing the voxel grid are given for a total of gl_nVoxel[0]*gl_nVoxel[1]*gl_nVoxel[2] (double) values.
-Each sequence of length gl_nVoxel[0]*gl_nVoxel[1] represents a grid.
-The order followed in writing the two-dimensional grids is starting from the bottom one.
+Then, the values composing the voxel grid are given for a total of (gl_nVoxel[0] * gl_nVoxel[1] * gl_nVoxel[2]) (double) 
+values. Each sequence of length v 1 ∗ v 3 represents a horizontal slice of the object stored as a one-dimensional array 
+of elements ordered first by the x coordinate and then by the z coordinate. The first slice memorized is the bottom one, 
+followed by the other slices in ascending order of the y coordinate.
 
 */
 
@@ -51,8 +52,8 @@ The order followed in writing the two-dimensional grids is starting from the bot
 #include "common.h"
 #include "voxel.h"
 
-#define OBJ_BUFFER 1000
-#define DEFAULT_WORK_SIZE 2352
+#define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
+#define DEFAULT_WORK_SIZE 2352                  // default work size 
 #define N_PIXEL_ALONG_SIDE (DETECTOR_SIDE_LENGTH / PIXEL_DIM)
 
 /**
@@ -170,7 +171,7 @@ int main(int argc, char *argv[])
     }
 
 
-    //iterates over object subsection
+    //iterates over each object subsection which size is limited along the y coordinate by OBJ_BUFFER
     for(int slice = 0; slice < gl_nVoxel[Y]; slice += OBJ_BUFFER){
         //generate object subsection
         switch (objectType){
