@@ -1,3 +1,8 @@
+# Use the FILE_BINARY=yes argument when running make in order to compile 
+# projection.c so that it stores the output in a binary file.
+# If the argument is not used, the projection algorithm will store the
+# output in a text file in pgm format.
+
 ifeq ($(FILE_BINARY),yes)
 	BINARY = -DBINARY
 else
