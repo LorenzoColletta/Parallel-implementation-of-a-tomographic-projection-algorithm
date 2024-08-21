@@ -209,13 +209,11 @@ int main(int argc, char *argv[])
         }
 
         if(slice < gl_nVoxel[Y]){
-            printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER);
             if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER, filePoiter)){
                 printf("Unable to write on file!");
                 exit(4);
             }
         } else {
-            printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]));
             if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]), filePoiter)){
                 printf("Unable to write on file!");
                 exit(5);
