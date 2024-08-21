@@ -71,7 +71,6 @@ The output file is structured as follows:
 double omp_get_wtime( void ) { return 0; }
 #endif
 
-#define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
 #define TABLES_DIM 1024
 
 /**
@@ -173,7 +172,7 @@ int main(int argc, char *argv[])
 
     initTables(sineTable, cosineTable, TABLES_DIM);
 
-    double totalTime = omp_get_wtime();
+    double totalTime = 0.0;
 
 #ifdef BINARY
     outputFilePointer = fopen(outputFileName,"wb");
@@ -206,10 +205,12 @@ int main(int argc, char *argv[])
         }
 
         //computes subsection projection
+        double partialTime = omp_get_wtime();
         computeProjections(slice, grid, absorbment, &absMaxValue, &absMinValue);
+        totalTime += omp_get_wtime() - partialTime;
 
     }
-    fprintf(stderr,"Execution time: %lf\n", omp_get_wtime() - totalTime);
+    fprintf(stderr,"Execution time: %lf\n",totalTime);
     fflush(stderr);
 
 //write on file

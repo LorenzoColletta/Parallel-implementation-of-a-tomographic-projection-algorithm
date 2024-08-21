@@ -73,6 +73,7 @@ followed by the other slices in ascending order of the y coordinate.
 #include "common.h"
 #include "voxel.h"
 
+#define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
 #define DEFAULT_WORK_SIZE 2352                  // default work size
 #define N_PIXEL_ALONG_SIDE (DETECTOR_SIDE_LENGTH / PIXEL_DIM)
 
@@ -221,6 +222,8 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * gl_nVoxel[Y]);
 
     fclose(filePoiter);
     free(grid);
