@@ -1,3 +1,24 @@
+/****************************************************************************
+ *
+ * inputgenerator.c
+ *
+ * Copyright (C) 2024 Lorenzo Colletta
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************************/
+
 /***
 This program generates a three-dimesnional voxel grid and stores it into the specified binary file.
 
@@ -7,18 +28,18 @@ COMPILE:
 
 RUN:
 
-    inputgeneration output.dat [object Type] [integer] 
+    inputgeneration output.dat [object Type] [integer]
 
 - First parameter is the name of the file to store the output in;
 - Second parameter is optional and can be: 1 (solid cube with spherical cavity), 2 (solid sphere) or 3 (solid cube),
   if not passed 3 (solid cube) is default;
-- Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value, 
+- Third parameter is the number of pixel per side of the detector, every other parameter is set based to its value,
   if no value is given, default values are used;
 
 OUTPUT FILE STRUCTURE:
 
 The voxel (three-dimensional) grid is represented as a stack of two-dimensional grids.
-Considering a three-dimensional Cartesian system where the x-axis is directed from left to right, the y-axis is 
+Considering a three-dimensional Cartesian system where the x-axis is directed from left to right, the y-axis is
 directed upwards, and the z-axis is orthogonal to them,
 a two-dimensional grid can be viewed as a horizontal slice, orthogonal to the y-axis, of the object.
 
@@ -40,9 +61,9 @@ First a sequence of 16 integer values is given, representing on order:
  - gl_nPlanes[1]
  - gl_nPlanes[2]
 
-Then, the values composing the voxel grid are given for a total of (gl_nVoxel[0] * gl_nVoxel[1] * gl_nVoxel[2]) (double) 
-values. Each sequence of length v 1 ∗ v 3 represents a horizontal slice of the object stored as a one-dimensional array 
-of elements ordered first by the x coordinate and then by the z coordinate. The first slice memorized is the bottom one, 
+Then, the values composing the voxel grid are given for a total of (gl_nVoxel[0] * gl_nVoxel[1] * gl_nVoxel[2]) (double)
+values. Each sequence of length v 1 ∗ v 3 represents a horizontal slice of the object stored as a one-dimensional array
+of elements ordered first by the x coordinate and then by the z coordinate. The first slice memorized is the bottom one,
 followed by the other slices in ascending order of the y coordinate.
 
 */
@@ -53,13 +74,13 @@ followed by the other slices in ascending order of the y coordinate.
 #include "voxel.h"
 
 #define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
-#define DEFAULT_WORK_SIZE 2352                  // default work size 
+#define DEFAULT_WORK_SIZE 2352                  // default work size
 #define N_PIXEL_ALONG_SIDE (DETECTOR_SIDE_LENGTH / PIXEL_DIM)
 
 /**
  * The following global variables are defined as according to common.h header file.
  * In order to use them with the value given below, the third parameter must not be passed at launch of 'inputgeneration' program.
- * In case the third value is given at launch, this will be used to compute the value of gl_objectSideLenght, gl_detectorSideLength, 
+ * In case the third value is given at launch, this will be used to compute the value of gl_objectSideLenght, gl_detectorSideLength,
  * gl_distanceObjectDetector and gl_distanceObjectSource; the remaining variables will keep the value given below.
  */
 int gl_pixelDim = PIXEL_DIM;
@@ -86,7 +107,8 @@ int gl_nPlanes[3] = {N_PLANES_X, N_PLANES_Y, N_PLANES_Z};
  * 'filePointer' the file pointer to store the values in.
  * @returns 0 in case of writing failure, 1 otherwise.
  */
-int writeSetUp(FILE* filePointer){
+int writeSetUp(FILE* filePointer)
+{
     int setUp[] = { gl_pixelDim,
                     gl_angularTrajectory,
                     gl_positionsAngularDistance,
@@ -116,9 +138,9 @@ int main(int argc, char *argv[])
 
     FILE* filePoiter;
     char* fileName = "output.dat";
-    int n = DEFAULT_WORK_SIZE;                  // number of voxel along the detector's side, 
-                                                //furthermore the environment parmeters are computed in function of 'n'.                  
-    
+    int n = DEFAULT_WORK_SIZE;                  // number of voxel along the detector's side,
+                                                //furthermore the environment parmeters are computed in function of 'n'.
+
     int objectType = 0;                         // represents the object type chosen
 
     if(argc > 4 || argc < 2){

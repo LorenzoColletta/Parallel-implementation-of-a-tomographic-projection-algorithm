@@ -1,3 +1,27 @@
+/****************************************************************************
+ *
+ * common.h
+ *
+ * Copyright (C) 2024 Lorenzo Colletta
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************************/
+
+#ifndef COMMON_H
+#define COMMON_H
+
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
 #endif
@@ -10,7 +34,7 @@
 #define VOXEL_Z_DIM 100                         // voxel side length along z-axis
 
 #define PIXEL_DIM 85                            // side length of a pixel of the detector
-#define ANGULAR_TRAJECTORY 90                   // total angular distance traveled by the source 
+#define ANGULAR_TRAJECTORY 90                   // total angular distance traveled by the source
 #define POSITIONS_ANGULAR_DISTANCE 15           // angular distance between each source position
 
 #define OBJECT_SIDE_LENGTH        100000        // side length of the object
@@ -24,8 +48,8 @@
 #define N_VOXEL_X       (OBJECT_SIDE_LENGTH / VOXEL_X_DIM)              // number of voxel the object is composed of along the X axis
 #define N_VOXEL_Y       (OBJECT_SIDE_LENGTH / VOXEL_Y_DIM)              // number of voxel the object is composed of along the Y axis
 #define N_VOXEL_Z       (OBJECT_SIDE_LENGTH / VOXEL_Z_DIM)              // number of voxel the object is composed of along the Z axis
-#define N_PLANES_X      ((OBJECT_SIDE_LENGTH / VOXEL_X_DIM) + 1)        // number of planes along the X axis 
-#define N_PLANES_Y      ((OBJECT_SIDE_LENGTH / VOXEL_Y_DIM) + 1)        // number of planes along the Y axis 
+#define N_PLANES_X      ((OBJECT_SIDE_LENGTH / VOXEL_X_DIM) + 1)        // number of planes along the X axis
+#define N_PLANES_Y      ((OBJECT_SIDE_LENGTH / VOXEL_Y_DIM) + 1)        // number of planes along the Y axis
 #define N_PLANES_Z      ((OBJECT_SIDE_LENGTH / VOXEL_Z_DIM) + 1)        // number of planes along the Z axis
 
 /**
@@ -60,12 +84,12 @@ typedef struct{
  * The following global variables represent the input parameters needed to set up the environment.
  * A reference to each variable value is provided by the previously defined constants.
  */
-extern int gl_pixelDim;                         // side length of a pixel of the detector        
-extern int gl_angularTrajectory;                // total angular distance traveled by the source 
+extern int gl_pixelDim;                         // side length of a pixel of the detector
+extern int gl_angularTrajectory;                // total angular distance traveled by the source
 extern int gl_positionsAngularDistance;         // angular distance between each source position
 extern int gl_objectSideLenght;                 // side length of the object
-extern int gl_detectorSideLength;               // side lenth of the detector                   
-extern int gl_distanceObjectDetector;           // distance between the object's center and the detector           
+extern int gl_detectorSideLength;               // side lenth of the detector
+extern int gl_distanceObjectDetector;           // distance between the object's center and the detector
 extern int gl_distanceObjectSource;             // distance between the object's center and the source position
 extern int gl_voxelXDim;                        // voxel side along x-axis
 extern int gl_voxelYDim;                        // voxel side along y-axis
@@ -76,12 +100,12 @@ extern int gl_nPlanes[3];                       // an array containing the numbe
 
 /**
  * Function that initializes the global variables.
- * 'pixelDim' is the side length of a pixel of the detector        
- * 'angularTrajectory' is the total angular distance traveled by the source 
+ * 'pixelDim' is the side length of a pixel of the detector
+ * 'angularTrajectory' is the total angular distance traveled by the source
  * 'positionsAngularDistance' is the angular distance between each source position
  * 'objectSideLenght' is the side length of the object
- * 'detectorSideLength' is the side lenth of the detector                   
- * 'distanceDetObjectector' is the distance between the object's center and the detector           
+ * 'detectorSideLength' is the side lenth of the detector
+ * 'distanceDetObjectector' is the distance between the object's center and the detector
  * 'distanceSouObjectrce' is the distance between the object's center and the source position
  * 'voxelXDim' is the voxel side along x-axis
  * 'voxelYDim' is the voxel side along y-axis
@@ -110,3 +134,5 @@ void environmentParametersInit(int pixelDim,
  * 'length' length of the previous arrays.
  */
 void initTables( double *sinTable, double *cosTable, int length );
+
+#endif
