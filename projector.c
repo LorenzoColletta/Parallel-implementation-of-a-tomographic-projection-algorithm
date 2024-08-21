@@ -190,18 +190,18 @@ int main(int argc, char *argv[])
 
     //iterates over object subsection
     for(int slice = 0; slice < gl_nVoxel[Y]; slice += OBJ_BUFFER){
+        int nOfSlices;
+
+        if(gl_nVoxel[Y] - slice < OBJ_BUFFER){
+            nOfSlices = gl_nVoxel[Y] - slice;
+        } else {
+            nOfSlices = OBJ_BUFFER;
+        }
 
         //read voxels coefficients
-        if(slice < gl_nVoxel[Y]){
-            if(!fread(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER, inputFilePointer)){
-                printf("Unable to read on file!\n");
-                exit(1);
-            }
-        } else {
-            if(!fread(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]), inputFilePointer)){
-                printf("Unable to write on file!\n");
-                exit(1);
-            }
+        if(!fread(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * nOfSlices, inputFilePointer)){
+            printf("Unable to read on file!\n");
+            exit(1);
         }
 
         //computes subsection projection

@@ -195,29 +195,30 @@ int main(int argc, char *argv[])
 
     //iterates over each object subsection which size is limited along the y coordinate by OBJ_BUFFER
     for(int slice = 0; slice < gl_nVoxel[Y]; slice += OBJ_BUFFER){
+        int nOfSlices;
+
+        if(gl_nVoxel[Y] - slice < OBJ_BUFFER){
+            nOfSlices = gl_nVoxel[Y] - slice;
+        } else {
+            nOfSlices = OBJ_BUFFER;
+        }
+
         //generate object subsection
         switch (objectType){
             case 1:
-                generateCubeWithSphereSlice(grid, OBJ_BUFFER, slice, gl_nVoxel[X]);
+                generateCubeWithSphereSlice(grid, nOfSlices, slice, gl_nVoxel[X]);
                 break;
             case 2:
-                generateSphereSlice(grid, OBJ_BUFFER, slice, gl_objectSideLenght / 2);
+                generateSphereSlice(grid, nOfSlices, slice, gl_objectSideLenght / 2);
                 break;
             default:
-                generateCubeSlice(grid, OBJ_BUFFER, slice, gl_nVoxel[X]);
+                generateCubeSlice(grid, nOfSlices, slice, gl_nVoxel[X]);
                 break;
         }
 
-        if(slice < gl_nVoxel[Y]){
-            if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * OBJ_BUFFER, filePoiter)){
-                printf("Unable to write on file!");
-                exit(4);
-            }
-        } else {
-            if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * (slice - gl_nVoxel[Y]), filePoiter)){
-                printf("Unable to write on file!");
-                exit(5);
-            }
+        if(!fwrite(grid, sizeof(double), gl_nVoxel[X] * gl_nVoxel[Z] * nOfSlices, filePoiter)){
+            printf("Unable to write on file!");
+            exit(4);
         }
     }
 
