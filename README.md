@@ -1,4 +1,4 @@
-# 3D-image-reconstruction-based-on-tomographic-data
+# Parallel implementation of a tomographic projection algorithm
 The purpose of this repository is to provide a parallel implementation of a tomographic projection algorithm based on the Siddon algorithm and an implementation of an input generation algorithm for the projection.
 ## Generating the input
 The input to the projection algorithm is a three-dimensional voxel grid mapped to a one-dimensional array of doubles.
