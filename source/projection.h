@@ -22,7 +22,7 @@
 #ifndef PROJECTION_H
 #define PROJECTION_H
 
-#define OBJ_BUFFER 1000
+#define OBJ_BUFFER 100                          // limits the number of voxel alogn the y axis computed per time
 
 /**
  * Computes the projection of a sub-section of the object onto the detector for each source position.
