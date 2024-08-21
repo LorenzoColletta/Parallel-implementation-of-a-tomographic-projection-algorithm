@@ -1,9 +1,31 @@
+/****************************************************************************
+ *
+ * projector.c
+ *
+ * Copyright (C) 2024 Lorenzo Colletta
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************************/
+
+
 /***
 This program implements the Siddon algorithm to compute 2-dimensional projections of a three dimensional voxel grid.
 
 COMPILE:
-This program can be compiled so that: it returns the output in a text file in pgm format, in this case the calculated 
-values ​​are converted to a gray scale from 0 to 255; returns the output in a binary file, in this case the values ​​are 
+This program can be compiled so that: it returns the output in a text file in pgm format, in this case the calculated
+values ​​are converted to a gray scale from 0 to 255; returns the output in a binary file, in this case the values ​​are
 stored as double values ​​for maximum accuracy, the structure of the file is described below.
 
 gcc command:
@@ -16,7 +38,7 @@ Compilation to use a binary file as output:
 
 RUN:
 
-    projector input.dat output.dat/output.pgm 
+    projector input.dat output.dat/output.pgm
 
 - First parameter is the name of the input file;
 - Second parameter is the name of a text or a binary file to store the output in.
@@ -29,11 +51,11 @@ The output file is structured as follows:
 - the second value is 'n' (integer type), the resolution of the image side
 - the third value is the maximum value computed (type double)
 - the third value is the minimum value computed (type double)
-- each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from 
+- each sequence of values ​​representing an image is preceded by a value (type double) which indicates the angle from
   which the image was computed
 - an image is a sequence of n*n double values; the image is stored as a one-dimensional array, sorted first by the x
-  coordinate and then by the z coordinate (considering a three-dimensional Cartesian space with the x axis from left 
-  to right, the y axis oriented upwards and z perpendicular to them) 
+  coordinate and then by the z coordinate (considering a three-dimensional Cartesian space with the x axis from left
+  to right, the y axis oriented upwards and z perpendicular to them)
  */
 
 #include <stdio.h>
@@ -79,7 +101,8 @@ double *cosineTable;
  * 'filePointer' the file pointer to read the values from.
  * @returns 0 in case of writing failure, 1 otherwise.
  */
-int readSetUP(FILE* filePointer){
+int readSetUP(FILE* filePointer)
+{
     int buffer[16];
     //read object parameters set up
     if(!fread(buffer, sizeof(int), 16, filePointer)){
@@ -149,7 +172,7 @@ int main(int argc, char *argv[])
     cosineTable = (double*)malloc(sizeof(double)*TABLES_DIM);
 
     initTables(sineTable, cosineTable, TABLES_DIM);
-    
+
     double totalTime = omp_get_wtime();
 
 #ifdef BINARY
