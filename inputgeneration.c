@@ -24,7 +24,7 @@ This program generates a three-dimesnional voxel grid and stores it into the spe
 
 COMPILE:
 
-    gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -o inputgeneration
+    gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
 
 RUN:
 

@@ -5,7 +5,7 @@ The input to the projection algorithm is a three-dimensional voxel grid mapped t
 The source code that implements an algorithm to generate the input to the projection algorithm is provided in ```inputgeneration.c```.
 
 ### Compile
-    gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -o inputgeneration
+    gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
 
 ### Run:
     inputgeneration output.dat [object Type] [integer] 
@@ -44,11 +44,11 @@ The first slice memorized is the bottom one, followed by the other slices in asc
 The projection algorithm can be compiled in two different ways: 
 * **with -DBINARY argument:** returns the output in a binary file, in this case the values ​​are stored as type double values ​​for maximum accuracy;
 
-    ```gcc -Wall -Wpedantic -std=c99 -fopenmp -DBINARY projector.c ./source/voxel.c -I./source/ -o projector``` 
+    ```gcc -Wall -Wpedantic -std=c99 -fopenmp -DBINARY projector.c ./source/voxel.c -I./source/ -lm -o projector``` 
   
 * **without -DBINARY argument:** it returns the output in a text file in pgm format, in this case the calculated values ​​are converted to a gray scale from 0 to 255.
 
-    ```gcc -Wall -Wpedantic -std=c99 -fopenmp projector.c ./source/voxel.c -I./source/ -o projector``` 
+    ```gcc -Wall -Wpedantic -std=c99 -fopenmp projector.c ./source/voxel.c -I./source/ -lm -o projector``` 
 
 ### Run
 

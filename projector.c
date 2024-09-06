@@ -30,11 +30,11 @@ stored as double values ​​for maximum accuracy, the structure of the file is
 
 gcc command:
 
-    gcc -Wall -Wpedantic -std=c99 -fopenmp projector.c ./source/voxel.c -I./source/ -o projector
+    gcc -Wall -Wpedantic -std=c99 -fopenmp projector.c ./source/voxel.c -I./source/ -lm -o projector
 
 Compilation to use a binary file as output:
 
-    gcc -Wall -Wpedantic -std=c99 -fopenmp -DBINARY projector.c ./source/voxel.c -I./source/ -o projector
+    gcc -Wall -Wpedantic -std=c99 -fopenmp -DBINARY projector.c ./source/voxel.c -I./source/ -lm -o projector
 
 RUN:
 
