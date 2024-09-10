@@ -105,9 +105,9 @@ int gl_nPlanes[3] = {N_PLANES_X, N_PLANES_Y, N_PLANES_Z};
 /**
  * Stores the environment values used to compute the voxel grid into the specified binary file.
  * 'filePointer' the file pointer to store the values in.
- * @returns 0 in case of writing failure, 1 otherwise.
+ * @returns the number of bytes which the header is made up of, 0 in case an error occurs on writing
  */
-int writeSetUp(FILE* filePointer)
+unsigned long writeSetUp(FILE* filePointer)
 {
     int setUp[] = { gl_pixelDim,
                     gl_angularTrajectory,
@@ -130,7 +130,7 @@ int writeSetUp(FILE* filePointer)
     if(!fwrite(setUp, sizeof(int), sizeof(setUp) / sizeof(int), filePointer)){
         return 0;
     }
-    return 1;
+    return sizeof(setUp);
 }
 
 int main(int argc, char *argv[])
@@ -139,9 +139,10 @@ int main(int argc, char *argv[])
     FILE* filePoiter;
     char* fileName = "output.dat";
     int n = DEFAULT_WORK_SIZE;                  // number of voxel along the detector's side,
-                                                //furthermore the environment parmeters are computed in function of 'n'.
+                                                // furthermore the environment parmeters are computed in function of 'n'.
 
     int objectType = 0;                         // represents the object type chosen
+    unsigned long headerLength = 0;                       // output file header length in bytes
 
     if(argc > 4 || argc < 2){
         fprintf(stderr,"Usage:\n\t%s output.dat [integer] [object Type]\n - First parameter is the name of the file to store the output in; "
@@ -186,12 +187,16 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
+#ifndef RAW
+
     //Write the voxel grid dimensions on file
-    if(!writeSetUp(filePoiter)){
+    headerLength = writeSetUp(filePoiter);
+    if(!headerLength){
         printf("Unable to write on file!");
         exit(3);
     }
 
+#endif
 
     //iterates over each object subsection which size is limited along the y coordinate by OBJ_BUFFER
     for(int slice = 0; slice < gl_nVoxel[Y]; slice += OBJ_BUFFER){
@@ -222,7 +227,21 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("Voxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * gl_nVoxel[Y]);
+    printf("Output file details:\n");
+    printf("\tVoxel model size: %lu byte\n",sizeof(double) * gl_nVoxel[X] * gl_nVoxel[Z] * gl_nVoxel[Y]);
+    printf("\tImage type: %lu bit real\n",sizeof(double) * 8);
+    printf("\tImage width: %d pixels\n", gl_nVoxel[X]);
+    printf("\tImage height: %d pixels\n", gl_nVoxel[Z]);
+    printf("\tOffset to first image: %lu bytes\n", headerLength);
+    printf("\tNumber of images: %d\n", gl_nVoxel[Y]);
+    printf("\tGap between images: 0 bytes\n");
+
+    int endianess = 1;
+    if(*(char *)&endianess == 1) {
+        printf("\tLittle endian byte order\n");
+    } else {
+        printf("\tBig endian byte order\n");
+    }
 
     fclose(filePoiter);
     free(grid);
