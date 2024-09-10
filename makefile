@@ -9,12 +9,19 @@ else
 	BINARY =
 endif
 
+ifeq ($(VOXEL_MODEL_RAW),yes)
+	VX_MODEL = -DRAW
+else
+	VX_MODEL =
+endif
+
+
 CFLAGS=-Wall -Wpedantic -std=c99 -fopenmp -I./source/
 
 all: inputgeneration projector
 
 inputgeneration: inputgeneration.c ./bin/voxel.o ./source/voxel.h
-	gcc ${CFLAGS} inputgeneration.c ./bin/voxel.o -lm -o inputgeneration
+	gcc ${CFLAGS} $(VX_MODEL) inputgeneration.c ./bin/voxel.o -lm -o inputgeneration
 
 ./bin/voxel.o: ./source/voxel.c ./source/voxel.h bin
 	gcc ${CFLAGS} -c ./source/voxel.c -o ./bin/voxel.o
