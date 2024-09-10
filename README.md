@@ -7,6 +7,10 @@ The source code that implements an algorithm to generate the input to the projec
 ### Compile
     gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
 
+This program can also be compiled so that the output file has no header (the 16 integer values described below). **This output file structure should not be used as input to the projection.c program**. Use the **-DRAW** argument when compiling:
+
+    gcc -Wall -Wpedantic -std=c99 -fopenmp -DRAW inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
+
 ### Run:
     inputgeneration output.dat [object Type] [integer] 
 
@@ -54,7 +58,7 @@ The projection algorithm can be compiled in two different ways:
 
     projector input.dat output.dat/output.pgm
 
-- First parameter is the name of the input file;
+- First parameter is the name of the input file. The structure of the input file should follow the one described above.
 - Second parameter is the name of a text or a binary file to store the output in.
 
 ### Binary file structure:
@@ -76,3 +80,13 @@ In case the projection algorithm is compiled to store the output in a pgm file, 
 This repository provides a makefile to automate the compilation of both ```inputgeneration.c``` and ```projection.c``` source files. To compile the ```projection.c``` source code with the binary file structure, use the ```FILE_BINARY=yes``` argument when running make:
 
     make FILE_BINARY=yes
+
+To compile ```inputgeneration.c``` so that the output file doesn't include a header use the ```VOXEL_MODEL_RAW=yes``` argument:
+
+    make VOXEL_MODEL_RAW=yes
+
+**In this case, the output file from ```inputgeneration``` should not be used as input to the ```projection``` program.**
+
+Both ```FILE_BINARY=yes``` and ```VOXEL_MODEL_RAW=yes``` arguments can be used simultaneously.
+
+    make FILE_BINARY=yes VOXEL_MODEL_RAW=yes

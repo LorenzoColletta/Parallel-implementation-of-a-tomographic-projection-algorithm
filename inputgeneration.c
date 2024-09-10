@@ -26,6 +26,11 @@ COMPILE:
 
     gcc -Wall -Wpedantic -std=c99 -fopenmp inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
 
+This program can also be compiled so that the output file has no header (the 16 integer values described below). 
+This output file structure should not be used as input to the projection.c program. Use the -DRAW argument when compiling:
+
+    gcc -Wall -Wpedantic -std=c99 -fopenmp -DRAW inputgeneration.c ./source/voxel.c -I./source/ -lm -o inputgeneration
+
 RUN:
 
     inputgeneration output.dat [object Type] [integer]

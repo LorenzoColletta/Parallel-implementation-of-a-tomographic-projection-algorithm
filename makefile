@@ -2,6 +2,10 @@
 # projection.c so that it stores the output in a binary file.
 # If the argument is not used, the projection algorithm will store the
 # output in a text file in pgm format.
+# Use the VOXEL_MODEL_RAW=yes argument when running make in order to 
+# compile inputgeneration.c so that the output file doesn't include a 
+# header.
+# Both argument can be used at the same time.
 
 ifeq ($(FILE_BINARY),yes)
 	BINARY = -DBINARY
